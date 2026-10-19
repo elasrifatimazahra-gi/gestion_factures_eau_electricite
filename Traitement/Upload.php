@@ -1,48 +1,47 @@
 <?php
 
-define("PHPTO_TAILLE_MAX", 5*1024*1024); 
+define("PHOTO_TAILLE_MAX", 5 * 1024 * 1024); 
 
 $TYPE_PHOTO = ["image/jpeg" => 'jpg', "image/png" => 'png'];
 
-function uplode($fichier){
+$erreurUpload = '';
 
-    global $TYPE_PHOTO,$erreurphoto;
-    $erreurphoto='';
+function uploadPhoto($fichier)
+{
+    global $TYPE_PHOTO, $erreurUpload;
+    $erreurUpload = '';
 
-    if (!isset($fichier) || $fichier['error'] != 0) {
-        $erreurphoto= "Erreur lors de l'upload";
+    if (!isset($fichier) || !is_array($fichier) || $fichier['error'] !== UPLOAD_ERR_OK) {
+        $erreurUpload = "Erreur lors du téléversement du fichier.";
         return false;
     }
 
-    if ($fichier['size'] > PHPTO_TAILLE_MAX) {
-        $erreurphoto= "Fichier trop volumineux";
+    if ($fichier['size'] > PHOTO_TAILLE_MAX) {
+        $erreurUpload = "Le fichier est trop volumineux (5 Mo maximum).";
         return false;
     }
 
     $finfo = finfo_open(FILEINFO_MIME_TYPE);
-    $mine = finfo_file($finfo, $fichier['tmp_name']);
+    $mime  = finfo_file($finfo, $fichier['tmp_name']);
     finfo_close($finfo);
 
-    if (!array_key_exists($mine, $TYPE_PHOTO)) {
-        $erreurphoto= "Type de fichier non autorisé";
+    if (!array_key_exists($mime, $TYPE_PHOTO)) {
+        $erreurUpload = "Type de fichier non autorisé. Seuls JPG et PNG sont acceptés.";
         return false;
     }
 
-    $extension = $TYPE_PHOTO[$mine];
-    $nomfichier = uniqid(random_bytes(12)) . '.' . $extension;
-    $dosier = __DIR__ . '/../uploads/';
+    $extension  = $TYPE_PHOTO[$mime];
+    $nomFichier = bin2hex(random_bytes(12)) . '_' . time() . '.' . $extension;
+    $dossier    = __DIR__ . '/../uploads/';
 
-    if(!is_dir($dosier)){
-        mkdir($dosier,0755,true);
+    if (!is_dir($dossier)) {
+        mkdir($dossier, 0755, true);
     }
 
-    if(!move_uploaded_file($fichier['tmp_name'],$dosier .$nomfichier)){
-        $erreurphoto= "Erreur lors de l'upload";
+    if (!move_uploaded_file($fichier['tmp_name'], $dossier . $nomFichier)) {
+        $erreurUpload = "Impossible de déplacer le fichier vers le dossier uploads/.";
         return false;
     }
-    return 'uploads/' . $nomfichier;
 
-
+    return 'uploads/' . $nomFichier;
 }
-
-?>
