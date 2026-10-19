@@ -1,0 +1,166 @@
+/* --- RESET ET POLICE --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f4f8f5;
+    color: #333;
+}
+
+.app-wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+.main-content {
+    flex-grow: 1;
+    padding: 40px;
+    overflow-y: auto;
+}
+
+h2 {
+    font-weight: 700;
+    color: #1a5235;
+    margin-bottom: 20px;
+}
+
+/* --- RECHERCHE ET BOUTONS --- */
+.recherche-client {
+    margin-bottom: 20px;
+}
+
+.barre-recherche {
+    display: flex;
+    gap: 15px;
+}
+
+.barre-recherche input[type="text"] {
+    flex-grow: 1;
+    padding: 12px 20px;
+    border: 1px solid #ddd;
+    border-radius: 25px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.barre-recherche input[type="text"]:focus {
+    border-color: #27ae60;
+    box-shadow: 0 0 5px rgba(39, 174, 96, 0.3);
+}
+
+.btn-submit {
+    background-color: #27ae60;
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 25px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: background 0.3s ease;
+}
+
+.btn-submit:hover {
+    background-color: #219150;
+}
+
+/* --- TABLEAU DES CLIENTS --- */
+.conteneur-table {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    overflow-x: auto; /* Active le scroll horizontal si l'écran est petit */
+}
+
+.table-clients {
+    width: 100%;
+    border-collapse: collapse;
+    white-space: nowrap; /* Empêche le texte de se casser sur plusieurs lignes */
+}
+
+.table-clients th, .table-clients td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
+}
+
+.table-clients th {
+    color: #888;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+}
+
+.message-vide {
+    text-align: center;
+    padding: 30px;
+    color: #777;
+    font-style: italic;
+}
+
+/* --- BOUTONS D'ACTIONS (Dans le tableau) --- */
+.actions a {
+    padding: 8px 15px;
+    margin-right: 5px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    text-decoration: none;
+    color: white;
+    display: inline-block;
+}
+
+.btn-edit { background-color: #3498db; }
+.btn-edit:hover { background-color: #2980b9; }
+
+.btn-mdp { background-color: #f39c12; }
+.btn-mdp:hover { background-color: #d68910; }
+
+.btn-debloquer { background-color: #27ae60; }
+.btn-debloquer:hover { background-color: #1e8449; }
+
+/* --- SIDEBAR --- */
+.sidebar {
+    width: 260px;
+    background-color: #1a5235;
+    color: white;
+    padding-top: 20px;
+    flex-shrink: 0; /* Empêche la sidebar de se rétrécir */
+}
+
+.sidebar h3 {
+    text-align: center;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #246a46;
+    margin-bottom: 20px;
+}
+
+.sidebar ul {
+    list-style: none;
+}
+
+.sidebar ul li a {
+    display: block;
+    padding: 15px 25px;
+    color: #d1e5d9;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.sidebar ul li a:hover {
+    background-color: #246a46;
+    color: white;
+    padding-left: 30px;
+}

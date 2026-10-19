@@ -13,7 +13,7 @@ function rechercher($terme)
 {
    global $link;
    $terme =  mysqli_real_escape_string($link,$terme);
-   $sql = "select * from clients where nom LIKE '%$terme%' or prenom LIKE '%$terme%' or email LIKE '%$terme%'";
+   $sql = "select * from clients where nom LIKE '%$terme%' or prenom LIKE '%$terme%' or cin LIKE '%$terme%'";
    return mysqli_query($link,$sql);
 }
 
@@ -40,7 +40,7 @@ function genererNumClient(){
     }
 
 
-function ajouter($id_utilisateur, $cin, $nom, $prenom, $adresse, $telephone, $numero_compteur_eau, $numero_compteur_elec) {
+function ajouter($id_utilisateur, $cin, $nom, $prenom, $adresse, $telephone, $numero_compteur_eau, $numero_compteur_elec,$index_initial_eau,$index_initial_elec) {
     global $link;
     $numero_client = genererNumClient();
     //Securite
@@ -51,14 +51,16 @@ function ajouter($id_utilisateur, $cin, $nom, $prenom, $adresse, $telephone, $nu
     $telephone            = mysqli_real_escape_string($link, $telephone);
     $numero_compteur_eau  = mysqli_real_escape_string($link, $numero_compteur_eau);
     $numero_compteur_elec = mysqli_real_escape_string($link, $numero_compteur_elec);
+    $index_initial_eau    = mysqli_real_escape_string($link,$index_initial_eau);
+    $index_initial_elec   = mysqli_real_escape_string($link,$index_initial_elec);
    
-    $sql = "INSERT INTO clients (id_utilisateur, numero_client, cin, nom, prenom, adresse, telephone, numero_compteur_eau, numero_compteur_elec)
-     VALUES ('$id_utilisateur', '$numero_client','$cin', '$nom', '$prenom', '$adresse',  '$telephone', '$numero_compteur_eau', '$numero_compteur_elec')";
+    $sql = "INSERT INTO clients (id_utilisateur, numero_client, cin, nom, prenom, adresse, telephone, numero_compteur_eau, numero_compteur_elec, index_initial_eau, index_initial_elec)
+     VALUES ('$id_utilisateur', '$numero_client','$cin', '$nom', '$prenom', '$adresse',  '$telephone', '$numero_compteur_eau', '$numero_compteur_elec', '$index_initial_eau', '$index_initial_elec')";
             
     return mysqli_query($link, $sql);
 }
 
-function modifier($id_client, $cin, $nom, $prenom, $adresse, $telephone, $numero_compteur_eau, $numero_compteur_elec) {
+function modifier($id_client, $cin, $nom, $prenom, $adresse, $telephone, $numero_compteur_eau, $numero_compteur_elec,$index_initial_eau, $index_initial_elec) {
     global $link;
     //Securite
     $id_client            = mysqli_real_escape_string($link, $id_client);
@@ -69,9 +71,11 @@ function modifier($id_client, $cin, $nom, $prenom, $adresse, $telephone, $numero
     $telephone            = mysqli_real_escape_string($link, $telephone);
     $numero_compteur_eau  = mysqli_real_escape_string($link, $numero_compteur_eau);
     $numero_compteur_elec = mysqli_real_escape_string($link, $numero_compteur_elec);
+    $index_initial_eau    = mysqli_real_escape_string($link,$index_initial_eau);
+    $index_initial_elec   = mysqli_real_escape_string($link,$index_initial_elec);
 
-    $sql = "UPDATE clients SET cin='$cin', nom='$nom', prenom='$prenom', adresse='$adresse', telephone='$telephone', numero_compteur_eau='$numero_compteur_eau', numero_compteur_elec='$numero_compteur_elec' WHERE id_client=$id_client";
-    
+    $sql = "UPDATE clients SET cin='$cin', nom='$nom', prenom='$prenom', adresse='$adresse', telephone='$telephone', numero_compteur_eau='$numero_compteur_eau', numero_compteur_elec='$numero_compteur_elec', index_initial_eau='$index_initial_eau', index_initial_elec='$index_initial_elec' WHERE id_client=$id_client";
+
     return mysqli_query($link, $sql);
 }
 
