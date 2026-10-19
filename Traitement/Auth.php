@@ -85,6 +85,9 @@ function Auth_connecter($param = null)
     $_SESSION['role']              = $user['role'];
     $_SESSION['derniere_activite'] = time();
 
+    if ($user['role'] === 'CLIENT') {
+        $_SESSION['id_client'] = bd_utilisateur_id_client($user['id_utilisateur']);
+    }
     rediriger('Auth/accueil');
 }
 
@@ -114,7 +117,7 @@ function exiger_role($role)
 
     // 2. Session expirée ?
     if (time() - ($_SESSION['derniere_activite'] ?? 0) > MINUTES_INACTIVITE * 60) {
-        unset($_SESSION['id_utilisateur'], $_SESSION['role'], $_SESSION['derniere_activite']);
+        unset($_SESSION['id_utilisateur'], $_SESSION['role'], $_SESSION['derniere_activite'], $_SESSION['id_client']);
         $_SESSION['erreur_login'] = "Session expirée, veuillez vous reconnecter.";
         rediriger($page);
     }
@@ -125,10 +128,6 @@ function exiger_role($role)
         http_response_code(403);
         include ROOT . 'IHM/auth/acces_refuse.php';
         exit;
-    }
-
-        if ($user['role'] === 'CLIENT') {
-        $_SESSION['id_client'] = bd_utilisateur_id_client($user['id_utilisateur']);
     }
 }
 
