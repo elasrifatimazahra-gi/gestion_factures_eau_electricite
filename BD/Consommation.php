@@ -24,6 +24,18 @@ function derniereSaisie($idClient)
     return $ligne ? $ligne : null;
 }
 
+// Index d'installation du client (utilisé pour la première saisie)
+function indexInitial($idClient)
+{
+    $conn = Connexion();
+    $sql  = mysqli_prepare($conn, "SELECT index_initial_eau, index_initial_elec FROM clients WHERE id_client = ?");
+    mysqli_stmt_bind_param($sql, "i", $idClient);
+    mysqli_stmt_execute($sql);
+    $ligne = mysqli_fetch_assoc(mysqli_stmt_get_result($sql));
+    mysqli_stmt_close($sql);
+    return $ligne;
+}
+
 function enregistrer($idClient, $annee, $mois, $indexEauPrec, $indexEauNouv, $consoEau, $photoEau, $indexElecPrec, $indexElecNouv, $consoElec, $photoElec, $typeSaisie = 'REELLE', $statut = 'VALIDE')
 {
     $conn = Connexion();
@@ -46,7 +58,6 @@ function trouverParId($idConso)
     return $ligne ? $ligne : null;
 }
 
-
 function mettreAJourStatut($id, $statut)
 {
     $conn = Connexion();
@@ -56,5 +67,3 @@ function mettreAJourStatut($id, $statut)
     mysqli_stmt_close($sql);
     return $ok;
 }
-
-?>
