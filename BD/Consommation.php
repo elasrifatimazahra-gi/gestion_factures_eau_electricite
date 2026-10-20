@@ -39,7 +39,7 @@ function indexInitial($idClient)
 function enregistrer($idClient, $annee, $mois, $indexEauPrec, $indexEauNouv, $consoEau, $photoEau, $indexElecPrec, $indexElecNouv, $consoElec, $photoElec, $typeSaisie = 'REELLE', $statut = 'VALIDE')
 {
     $conn = Connexion();
-    $sql  = mysqli_prepare($conn, "INSERT INTO consommations(id_client, annee, mois, index_eau_precedent, index_eau_nouveau, conso_eau, photo_compteur_eau, index_elec_precedent, index_elec_nouveau, conso_elec, photo_compteur_elec, type_saisie, statut) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $sql  = mysqli_prepare($conn, "INSERT INTO consommations (id_client, annee, mois, index_eau_precedent, index_eau_nouveau, conso_eau, photo_compteur_eau, index_elec_precedent, index_elec_nouveau, conso_elec, photo_compteur_elec, type_saisie, statut) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     mysqli_stmt_bind_param($sql, "iiiiiisiiisss", $idClient, $annee, $mois, $indexEauPrec, $indexEauNouv, $consoEau, $photoEau, $indexElecPrec, $indexElecNouv, $consoElec, $photoElec, $typeSaisie, $statut);
     $ok = mysqli_stmt_execute($sql);
     $id = mysqli_insert_id($conn);

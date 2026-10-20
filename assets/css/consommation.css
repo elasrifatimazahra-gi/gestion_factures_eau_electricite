@@ -1,291 +1,181 @@
-/* ===== Charte Portail Eau & Électricité (maquette, chapitre 6) ===== */
-:root {
-    --vert-fonce: #0d3b2a;
-    --vert: #1a6b4a;
-    --vert-clair: #e6f2ec;
-    --fond: #f3f6f4;
-    --texte: #1f2a25;
-    --gris: #6b7a72;
-    --bordure: #dfe7e2;
-    --rouge: #c0392b;
-}
+/* Page "Ma déclaration" (Membre 3) : s'appuie sur le gabarit de factures.css */
 
-* { box-sizing: border-box; }
-
-body {
-    margin: 0;
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
-    color: var(--texte);
-    background: var(--fond);
-}
-
-/* ----- Sidebar ----- */
-.sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 240px;
-    background: var(--vert-fonce);
-    padding: 24px 0;
-    overflow-y: auto;
-}
-
-.brand {
-    padding: 0 24px 24px;
-    color: #ffffff;
-}
-
-.brand strong {
-    display: block;
-    font-size: 20px;
-}
-
-.brand small {
-    display: block;
-    font-size: 10px;
-    letter-spacing: 1px;
-    color: #9ccab5;
-    margin-top: 2px;
-}
-
-.menu-label {
-    margin: 0 24px 8px;
-    font-size: 11px;
-    letter-spacing: 1px;
-    color: #7fa595;
-}
-
-.sidebar-menu {
-    list-style: none;
-    margin: 0;
-    padding: 0 12px;
-}
-
-.sidebar-menu a {
-    display: block;
-    padding: 11px 14px;
-    margin-bottom: 4px;
-    border-radius: 8px;
-    color: #cfe3d9;
-    text-decoration: none;
+/* ----- Bandeau d'état de la période ----- */
+.saisie-bandeau {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #e6f4ec;
+    color: var(--vert-sombre);
+    border-radius: 16px;
+    padding: 18px 22px;
+    margin: 34px 0 28px;
     font-size: 15px;
 }
 
-.sidebar-menu a:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: #ffffff;
+.saisie-bandeau.ferme {
+    background: #f1f3f2;
+    color: #4b5a54;
 }
 
-.sidebar-menu a.active {
-    background: #ffffff;
-    color: var(--vert-fonce);
-    font-weight: 600;
-}
-
-/* ----- Zone principale ----- */
-.main {
-    margin-left: 240px;
-    min-height: 100vh;
-}
-
-.topbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 32px;
-    background: #ffffff;
-    border-bottom: 1px solid var(--bordure);
-}
-
-.statut {
-    font-size: 13px;
-    color: var(--gris);
-}
-
-.point {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #2ecc71;
-    margin-right: 6px;
-}
-
-.deconnexion {
-    color: var(--vert);
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 600;
-}
-
-.contenu {
-    padding: 32px;
-    max-width: 1100px;
-}
-
-.contenu h1 {
-    margin: 0 0 20px;
-    font-size: 26px;
-    color: var(--vert-fonce);
-}
-
-/* ----- Bandeau d'information ----- */
-.bandeau {
-    background: var(--vert-clair);
-    color: var(--vert-fonce);
-    border-radius: 10px;
+/* ----- Messages (erreur / succès) ----- */
+.saisie-alerte {
+    border-radius: 14px;
     padding: 14px 18px;
-    margin-bottom: 24px;
-    font-size: 14px;
+    margin: 24px 0 0;
+    font-size: 15px;
 }
 
-/* ----- Messages ----- */
-.message {
-    padding: 12px 16px;
-    border-radius: 8px;
-    margin: 0 0 16px;
-    font-size: 14px;
-}
-
-.message-erreur {
-    background: #fdecea;
+.saisie-alerte-erreur {
+    background: #fbdcdc;
     color: #8a1c12;
     border: 1px solid #f5c2bd;
 }
 
-.message-succes {
-    background: #e8f6ee;
-    color: var(--vert-fonce);
+.saisie-alerte-succes {
+    background: #dcf2e5;
+    color: #1f7a4a;
     border: 1px solid #b7e0c8;
 }
 
-/* ----- Cartes eau et électricité ----- */
-.grille {
+/* ----- Grille des deux cartes ----- */
+.saisie-grille {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-    gap: 24px;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 28px;
 }
 
-.carte {
+.saisie-carte {
     background: #ffffff;
-    border: 1px solid var(--bordure);
-    border-radius: 14px;
-    padding: 24px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    border: 1px solid #e5eae7;
+    border-radius: 20px;
+    padding: 28px;
 }
 
-.carte-entete {
+.saisie-entete {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
+    gap: 14px;
+    margin-bottom: 22px;
 }
 
-.carte-entete h2 {
+.saisie-entete h2 {
     margin: 0;
-    font-size: 17px;
-    color: var(--vert-fonce);
+    font-size: 20px;
+    font-weight: 700;
+    color: #123b2c;
 }
 
-.carte-entete small {
+.saisie-entete small {
+    font-size: 14px;
     color: var(--gris);
-    font-size: 13px;
 }
 
-.icone {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: var(--vert-clair);
+.saisie-icone {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: #e6f4ec;
+    color: var(--vert-sombre);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    flex-shrink: 0;
 }
 
-.precedent {
+/* ----- Index précédent ----- */
+.saisie-precedent {
     background: var(--fond);
-    border-radius: 10px;
-    padding: 14px 16px;
-    margin-bottom: 16px;
+    border-radius: 14px;
+    padding: 16px 18px;
     display: flex;
     flex-direction: column;
     gap: 4px;
 }
 
-.precedent span {
+.saisie-precedent span {
     font-size: 13px;
     color: var(--gris);
 }
 
-.precedent strong {
-    font-size: 20px;
+.saisie-precedent strong {
+    font-size: 22px;
     color: var(--texte);
 }
 
-.carte label {
+/* ----- Champs de saisie ----- */
+.saisie-carte label {
     display: block;
-    font-size: 13px;
-    color: var(--gris);
-    margin: 16px 0 6px;
-}
-
-.carte input[type="text"] {
-    width: 100%;
-    padding: 12px 14px;
-    border: 1px solid var(--bordure);
-    border-radius: 8px;
-    font-size: 16px;
-    font-family: inherit;
-}
-
-.carte input[type="text"]:focus {
-    outline: none;
-    border-color: var(--vert);
-    box-shadow: 0 0 0 3px rgba(26, 107, 74, 0.15);
-}
-
-.conso {
-    margin: 14px 0 0;
     font-size: 14px;
+    color: var(--gris);
+    margin: 20px 0 8px;
+}
+
+.saisie-carte input[type="text"] {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid #dfe5e2;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 17px;
+    color: var(--texte);
+}
+
+.saisie-carte input[type="text"]:focus {
+    outline: none;
+    border-color: var(--vert-bouton);
+    box-shadow: 0 0 0 3px rgba(23, 63, 47, 0.15);
+}
+
+/* ----- Consommation calculée en direct ----- */
+.saisie-conso {
+    margin: 16px 0 0;
+    font-size: 15px;
     color: var(--gris);
 }
 
 #conso-eau,
 #conso-elec {
     font-weight: 700;
-    font-size: 16px;
-    color: var(--vert);
+    font-size: 17px;
+    color: var(--vert-bouton);
 }
 
 /* Ajoutée par declaration.js si la consommation est négative */
 #conso-eau.anomalie,
 #conso-elec.anomalie {
-    color: var(--rouge);
+    color: #b03030;
 }
 
-/* Bouton « Ajouter une photo » : le label sert de bouton */
-.carte .bouton-fichier {
+/* ----- Zone « Ajouter une photo » (cadre en pointillés) ----- */
+.saisie-carte .saisie-fichier {
     position: relative;
-    display: block;
-    text-align: center;
-    margin-top: 16px;
-    padding: 11px;
-    border: 1px solid var(--vert);
-    border-radius: 8px;
-    color: var(--vert);
-    font-size: 14px;
-    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+    padding: 22px;
+    border: 1px dashed #b9c7c0;
+    border-radius: 14px;
+    background: #fafcfb;
+    color: var(--texte);
+    font-size: 16px;
+    font-weight: 500;
     cursor: pointer;
 }
 
-.carte .bouton-fichier:hover {
-    background: var(--vert-clair);
+.saisie-carte .saisie-fichier .ico {
+    color: var(--vert-bouton);
 }
 
-/* Champ fichier masqué visuellement mais toujours actif (required fonctionne) */
-.cache {
+.saisie-carte .saisie-fichier:hover {
+    background: #e6f4ec;
+    border-color: var(--vert-bouton);
+}
+
+/* Champ fichier masqué mais toujours actif (required fonctionne) */
+.saisie-cache {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -294,54 +184,41 @@ body {
     opacity: 0;
 }
 
-.apercu {
+.saisie-apercu {
     display: block;
     width: 100%;
-    max-height: 160px;
+    max-height: 180px;
     object-fit: cover;
-    border-radius: 8px;
-    margin-top: 10px;
+    border-radius: 12px;
+    margin-top: 12px;
 }
 
-.aide {
+.saisie-aide {
     text-align: center;
-    font-size: 12px;
+    font-size: 13px;
     color: var(--gris);
-    margin: 8px 0 0;
+    margin: 10px 0 0;
 }
 
 /* ----- Bouton d'envoi ----- */
-.pied {
+.saisie-pied {
     display: flex;
     justify-content: flex-end;
-    margin-top: 24px;
+    margin-top: 30px;
 }
 
-.pied button {
-    background: var(--vert-fonce);
+.saisie-pied button {
+    background: var(--vert-sombre);
     color: #ffffff;
     border: none;
-    border-radius: 8px;
-    padding: 12px 24px;
-    font-size: 15px;
-    font-weight: 600;
+    border-radius: 14px;
+    padding: 15px 28px;
     font-family: inherit;
+    font-size: 16px;
+    font-weight: 600;
     cursor: pointer;
 }
 
-.pied button:hover {
-    background: var(--vert);
-}
-
-@media (max-width: 768px) {
-    .sidebar {
-        position: static;
-        width: 100%;
-    }
-    .main {
-        margin-left: 0;
-    }
-    .grille {
-        grid-template-columns: 1fr;
-    }
+.saisie-pied button:hover {
+    background: var(--vert-bouton);
 }
