@@ -1,0 +1,309 @@
+/* ==========================================================
+   Portail – Styles communs de l espace fournisseur (variables, layout, sidebar, topbar)
+   À charger sur TOUTES les pages, avant le CSS de la page.
+   ========================================================== */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+:root {
+  /* Couleurs */
+  --green-900: #0f3426;      /* sidebar */
+  --green-800: #164532;
+  --green-700: #1d5a42;
+  --green-100: #dff1e6;
+  --green-600: #2f7d4f;
+  --bg: #f5f6f5;             /* fond de page */
+  --surface: #ffffff;
+  --border: #e6e9e7;
+  --text: #14231c;
+  --text-muted: #7a8780;
+  --amber-bg: #fdf0d3;
+  --amber-text: #b7791f;
+  --danger: #e5484d;
+
+  /* Formes */
+  --radius-lg: 18px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+  --shadow-card: 0 1px 2px rgba(15, 52, 38, .04), 0 6px 20px rgba(15, 52, 38, .04);
+
+  --sidebar-w: 240px;
+  --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 15px;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Layout ---------- */
+.app {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  height: 100vh;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+.content {
+  padding: 24px 32px 48px;
+}
+
+/* ---------- Sidebar ---------- */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  background: var(--green-900);
+  color: #e8f1ec;
+  padding: 20px 16px;
+  overflow-y: auto;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 4px 24px;
+}
+
+.brand__logo {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  color: var(--green-900);
+  border-radius: 12px;
+}
+
+.brand__name {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #fff;
+}
+
+.brand__tag {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #9bb8a9;
+}
+
+.sidebar__section {
+  margin: 8px 4px 10px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #7fa08e;
+}
+
+.nav {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nav__link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: var(--radius-md);
+  color: #d5e4dc;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background .15s ease, color .15s ease;
+}
+
+.nav__link svg { width: 18px; height: 18px; flex: none; opacity: .85; }
+
+.nav__link:hover { background: rgba(255, 255, 255, .07); }
+
+.nav__link.is-active {
+  background: #fff;
+  color: var(--green-900);
+  font-weight: 600;
+}
+
+.nav__link.is-active .nav__chevron { margin-left: auto; }
+
+.sidebar__user {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: rgba(255, 255, 255, .07);
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: var(--radius-md);
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--green-100);
+  color: var(--green-900);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.sidebar__user-name { font-size: 12px; font-weight: 600; color: #fff; }
+.sidebar__user-role { font-size: 10px; color: #9bb8a9; }
+
+/* ---------- Topbar ---------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 32px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.topbar__title { margin: 0; font-size: 18px; font-weight: 700; }
+.topbar__subtitle { margin: 2px 0 0; font-size: 12px; color: var(--text-muted); }
+
+.topbar__actions { display: flex; align-items: center; gap: 14px; }
+
+.lang {
+  display: inline-flex;
+  padding: 3px;
+  background: #eef0ef;
+  border-radius: 10px;
+}
+
+.lang__btn {
+  border: 0;
+  background: transparent;
+  padding: 6px 10px;
+  font: 700 11px var(--font);
+  color: var(--text-muted);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.lang__btn.is-active {
+  background: #fff;
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .08);
+}
+
+.icon-btn {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.icon-btn__dot {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--danger);
+  border: 1.5px solid #fff;
+}
+
+.user { line-height: 1.25; }
+.user__name { font-size: 12px; font-weight: 600; }
+.user__email { font-size: 10px; color: var(--text-muted); }
+
+.logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: 0;
+  font: 500 15px var(--font);
+  color: var(--text);
+  cursor: pointer;
+}
+
+/* ---------- Bouton d'aide flottant ---------- */
+.help-fab {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: var(--green-900);
+  color: #fff;
+  font: 700 15px var(--font);
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(15, 52, 38, .3);
+}
+
+/* ---------- Boutons génériques ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 20px;
+  font: 600 14px var(--font);
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.btn--primary { background: var(--green-900); color: #fff; }
+.btn--primary:hover { background: var(--green-800); }
+
+/* ---------- Accessibilité ---------- */
+:focus-visible { outline: 2px solid var(--green-700); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+
+/* ---------- Responsive (commun) ---------- */
+@media (max-width: 960px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar { display: none; }           /* à remplacer par un menu burger */
+  .content, .topbar { padding-left: 16px; padding-right: 16px; }
+  .user { display: none; }
+}
+
+/* ---------- RTL (arabe, commun) ---------- */
+[dir="rtl"] .nav__link.is-active .nav__chevron { margin-left: 0; margin-right: auto; transform: scaleX(-1); }
+[dir="rtl"] .help-fab { right: auto; left: 20px; }

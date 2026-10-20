@@ -1,0 +1,113 @@
+/* ==========================================================
+   Page Anomalies – recherche, filtre, tableau, badges
+   Nécessite base.css
+   ========================================================== */
+
+/* ---------- Barre de recherche + filtre ---------- */
+.toolbar {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.search {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 18px;
+  height: 52px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+}
+
+.search input {
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: 400 16px var(--font);
+  color: var(--text);
+}
+
+.search input::placeholder { color: var(--text-muted); }
+.search:focus-within { border-color: var(--green-700); box-shadow: 0 0 0 3px rgba(29, 90, 66, .12); }
+
+.select {
+  height: 52px;
+  padding: 0 40px 0 18px;
+  min-width: 170px;
+  font: 600 14px var(--font);
+  color: var(--text);
+  background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%2314231c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 4l4 4 4-4'/%3E%3C/svg%3E") no-repeat right 16px center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  appearance: none;
+  cursor: pointer;
+}
+
+/* ---------- Tableau ---------- */
+.table-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.table { width: 100%; border-collapse: collapse; }
+
+.table th {
+  padding: 18px 20px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: #fafbfa;
+  border-bottom: 1px solid var(--border);
+}
+
+.table td {
+  padding: 18px 20px;
+  font-size: 14px;
+  text-align: center;
+  color: #34443c;
+  border-bottom: 1px solid var(--border);
+}
+
+.table tr:last-child td { border-bottom: 0; }
+.table tbody tr:hover { background: #fafcfb; }
+
+.table .cell-ref { font-weight: 700; color: var(--text); text-align: left; }
+.table th:first-child { text-align: left; }
+
+.table .cell-action { color: var(--text-muted); }
+.table .cell-action button { background: none; border: 0; cursor: pointer; color: inherit; }
+
+/* ---------- Badges de statut ---------- */
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge--open { background: var(--amber-bg); color: var(--amber-text); }
+.badge--done { background: var(--green-100); color: var(--green-600); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 960px) {
+  .toolbar { flex-direction: column; }
+  .table-card { overflow-x: auto; }
+  .table { min-width: 640px; }
+}
+
+/* ---------- RTL ---------- */
+[dir="rtl"] .table .cell-ref,
+[dir="rtl"] .table th:first-child { text-align: right; }
+[dir="rtl"] .select { padding: 0 18px 0 40px; background-position: left 16px center; }
