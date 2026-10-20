@@ -126,11 +126,12 @@ function bd_facture_appliquer_penalite($idFacture, $penalite)
                                 WHERE id_facture = $idFacture");
 }
 
-/** Nom, prénom et numéro du client (pour la barre latérale). */
+/** Identité et compteurs du client (barre latérale et en-tête de facture). */
 function bd_facture_infos_client($idClient)
 {
     $link = Connexion();
     $idClient = (int) $idClient;
-    $res = mysqli_query($link, "SELECT nom, prenom, numero_client FROM clients WHERE id_client = $idClient");
+    $res = mysqli_query($link, "SELECT nom, prenom, numero_client, adresse, numero_compteur_eau, numero_compteur_elec
+                                FROM clients WHERE id_client = $idClient");
     return $res ? mysqli_fetch_assoc($res) : null;
 }

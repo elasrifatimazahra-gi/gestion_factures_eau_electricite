@@ -87,6 +87,22 @@ function facture_date_courte($date)
     return date('j', $t) . ' ' . $mois[(int) date('n', $t)] . ' ' . date('Y', $t);
 }
 
+/** Prix unitaire déduit du montant facturé (le tarif a pu changer depuis). */
+function facture_prix_unitaire($montant, $conso)
+{
+    if ((int) $conso <= 0) {
+        return '-';
+    }
+    return number_format((float) $montant / (int) $conso, 2, ',', ' ') . ' DH';
+}
+
+/** Premier et dernier jour de la période : ['debut' => '01/10/2026', 'fin' => '31/10/2026'] */
+function facture_periode_dates($mois, $annee)
+{
+    $premier = sprintf('%04d-%02d-01', (int) $annee, (int) $mois);
+    return ['debut' => date('d/m/Y', strtotime($premier)), 'fin' => date('t/m/Y', strtotime($premier))];
+}
+
 function Facture_index($param = null)
 {
     Facture_liste($param);                    // /Facture sans action = la liste
@@ -125,6 +141,10 @@ function Facture_detail($param = null)
             $idClient, $facture['periode_annee'], $facture['periode_mois']
         );
     }
+
+    $client = bd_facture_infos_client($idClient);
+    $penalitePct = (float) lireParametre('PENALITE_RETARD_POURCENT', 5);
+    $penaliteMin = (float) lireParametre('PENALITE_RETARD_MINIMUM_DH', 15);
 
     include ROOT . 'IHM/client/facture_detail.php';
 }

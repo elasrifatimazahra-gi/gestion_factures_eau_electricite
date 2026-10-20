@@ -101,11 +101,11 @@ $menu = [
                         <tr>
                             <th>N° de facture</th>
                             <th>Période</th>
-                            <th>Type</th>
+                            <th class="col-type">Type</th>
                             <th>Montant TTC</th>
                             <th>Échéance</th>
                             <th>Statut</th>
-                            <th></th>
+                            <th class="col-action">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -114,11 +114,11 @@ $menu = [
                         <tr data-groupes="<?= facture_groupes($f) ?>">
                             <td class="fort"><?= htmlspecialchars($f['numero_facture']) ?></td>
                             <td><?= facture_nom_mois($f['periode_mois']) . ' ' . (int) $f['periode_annee'] ?></td>
-                            <td><?= facture_type_services($f) ?></td>
+                            <td class="col-type"><?= facture_type_services($f) ?></td>
                             <td class="fort"><?= number_format($f['montant_ttc'], 2, ',', ' ') ?> DH</td>
                             <td><?= facture_date_courte($f['date_echeance']) ?></td>
                             <td><span class="badge badge-<?= $classeBadge ?>"><?= $libelleBadge ?></span></td>
-                            <td><a class="oeil" href="<?= BASE_URL ?>Facture/detail/<?= (int) $f['id_facture'] ?>" title="Voir le détail"><?= $ico('oeil') ?></a></td>
+                            <td class="col-action"><a class="btn-detail" href="<?= BASE_URL ?>Facture/detail/<?= (int) $f['id_facture'] ?>" title="Voir la facture"><?= $ico('oeil') ?> Détail</a></td>
                         </tr>
                     <?php endforeach; ?>
                         <tr id="ligne-vide" style="display:<?= empty($factures) ? '' : 'none' ?>">
