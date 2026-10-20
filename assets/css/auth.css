@@ -1,0 +1,223 @@
+/* Pages de connexion client et fournisseur (Membre 1) */
+:root {
+    --vert: #166445;
+    --vert-fonce: #0f3b2c;
+    --vert-moyen: #1b6b4a;
+    --texte: #14352a;
+    --gris: #6b7a74;
+    --bord: #dfe6e2;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+    margin: 0;
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    color: var(--texte);
+    background: #fff;
+    -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; }
+
+/* ---------- Mise en page : panneau vert à gauche, formulaire à droite ---------- */
+.auth-page {
+    display: grid;
+    grid-template-columns: 42% 58%;
+    min-height: 100vh;
+}
+
+/* ---------- Panneau de gauche ---------- */
+.auth-visuel {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 28px 32px;
+    color: #fff;
+    background: var(--vert);
+}
+.auth-marque-nom { font-weight: 700; font-size: 22px; line-height: 1.1; }
+.auth-marque-sous { font-size: 12px; color: #cfe3d8; margin-top: 2px; }
+
+.auth-accroche { max-width: 440px; }
+.auth-surtitre {
+    display: inline-block;
+    padding-top: 10px;
+    margin-bottom: 22px;
+    border-top: 1px solid rgba(255, 255, 255, .45);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: #cfe3d8;
+}
+.auth-accroche h1 {
+    margin: 0 0 22px;
+    font-size: clamp(34px, 3.6vw, 52px);
+    font-weight: 300;
+    line-height: 1.08;
+    letter-spacing: -.01em;
+}
+.auth-accroche p { margin: 0; max-width: 380px; font-size: 15px; line-height: 1.6; color: #d4e6dc; }
+.auth-service { font-size: 12px; color: #bcd5c8; }
+
+/* ---------- Panneau de droite ---------- */
+.auth-formulaire {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 72px 40px 40px;
+    background: #fff;
+}
+.langues {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    display: flex;
+    align-items: center;
+    padding: 4px;
+    border: 1px solid var(--bord);
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gris);
+}
+.langues span { padding: 6px 10px; border-radius: 8px; }
+.langues .actif { background: #f1f5f3; color: var(--texte); }
+
+.auth-bloc { width: 100%; max-width: 400px; }
+.auth-etiquette {
+    display: inline-block;
+    padding-top: 8px;
+    margin-bottom: 14px;
+    border-top: 2px solid var(--vert);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--vert);
+}
+.auth-bloc h2 {
+    margin: 0 0 10px;
+    font-size: 40px;
+    font-weight: 500;
+    letter-spacing: -.02em;
+    line-height: 1.1;
+}
+.auth-sous-titre { margin: 0 0 28px; font-size: 15px; line-height: 1.5; color: var(--gris); }
+
+/* ---------- Formulaire ---------- */
+.champ { margin-bottom: 20px; }
+.champ label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 600; }
+.champ input {
+    width: 100%;
+    height: 46px;
+    padding: 0 14px;
+    font: inherit;
+    font-size: 14px;
+    color: var(--texte);
+    background: #fff;
+    border: 1px solid var(--bord);
+    border-radius: 10px;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+}
+.champ input::placeholder { color: #9aa8a1; }
+.champ input:focus { border-color: var(--vert); box-shadow: 0 0 0 3px rgba(22, 100, 69, .15); }
+
+.bouton {
+    width: 100%;
+    height: 46px;
+    margin-top: 6px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--vert);
+    color: #fff;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s;
+}
+.bouton:hover { background: var(--vert-fonce); }
+
+.alerte {
+    margin-bottom: 20px;
+    padding: 11px 14px;
+    border: 1px solid #f3c1c1;
+    border-radius: 10px;
+    background: #fdeeee;
+    color: #9b1c1c;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.auth-pied { margin-top: 22px; text-align: center; font-size: 13px; color: var(--gris); }
+.auth-pied strong { color: var(--texte); font-weight: 600; }
+.auth-lien {
+    display: inline-block;
+    margin-top: 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--vert);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.auth-copyright { margin-top: 6px; text-align: center; font-size: 11px; color: #9aa8a1; }
+
+.aide {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 50%;
+    background: #12251d;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, .25);
+}
+
+/* ---------- Variante fournisseur : fond vert + carte blanche ---------- */
+.auth-fournisseur .auth-visuel { background: linear-gradient(160deg, #0a2f21 0%, #0f4a33 100%); }
+.auth-fournisseur .auth-formulaire { background: linear-gradient(160deg, #1b6b4a 0%, #166445 100%); }
+.auth-fournisseur .auth-bloc {
+    max-width: 430px;
+    padding: 36px 34px 30px;
+    background: #fff;
+    border-radius: 22px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .25);
+}
+.auth-fournisseur .auth-bloc h2 { font-size: 36px; }
+.auth-fournisseur .langues { border-color: rgba(255, 255, 255, .55); color: #fff; }
+.auth-fournisseur .langues .actif { background: rgba(255, 255, 255, .2); color: #fff; }
+.auth-fournisseur .auth-pied { margin-top: 18px; }
+
+/* ---------- Petits écrans ---------- */
+@media (max-width: 880px) {
+    .auth-page { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+    .auth-visuel { padding: 20px 22px; }
+    .auth-accroche, .auth-service { display: none; }
+    .auth-formulaire { align-items: flex-start; padding: 56px 20px 40px; }
+    .auth-fournisseur .auth-formulaire { align-items: center; padding: 56px 16px 32px; }
+    .auth-bloc h2, .auth-fournisseur .auth-bloc h2 { font-size: 32px; }
+}
+/* ---------- Pages d'erreur (accès refusé) ---------- */
+.page-erreur {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+}
+.bouton-lien {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}

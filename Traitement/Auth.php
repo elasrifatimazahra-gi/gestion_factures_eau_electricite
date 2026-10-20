@@ -6,6 +6,7 @@ const NB_ECHECS         = 5;
 const DUREE_BLOCAGE      = 15;
 const MINUTES_INACTIVITE = 15;
 
+
 function rediriger($chemin)
 {
     header('Location: ' . BASE_URL . $chemin);
@@ -93,9 +94,53 @@ function Auth_connecter($param = null)
 
 function Auth_accueil($param = null)
 {
-    echo "Connecté : utilisateur n°" . ($_SESSION['id_utilisateur'] ?? '?')
-       . ", rôle " . ($_SESSION['role'] ?? '?')
-       . ' - <a href="' . BASE_URL . 'Auth/logout">Se déconnecter</a>';
+    if (!isset($_SESSION['id_utilisateur'])) {
+        rediriger('Auth/login_client');
+    }
+    exiger_role($_SESSION['role']);   // vérifie la connexion et l'expiration de session
+ 
+    // ----- Fournisseur : page simple -----
+    if ($_SESSION['role'] === 'FOURNISSEUR') {
+        include ROOT . 'IHM/fournisseur/accueil.php';
+        return;
+    }
+ 
+    // ----- Client : on prépare les données du tableau de bord -----
+    require_once ROOT . 'BD/Facture.php';
+    require_once ROOT . 'BD/Consommation.php';
+ 
+    $idClient = (int) ($_SESSION['id_client'] ?? 0);
+    $client   = bd_facture_infos_client($idClient) ?: ['nom' => '', 'prenom' => '', 'numero_client' => ''];
+ 
+    // Solde à payer = somme des factures impayées ou en retard ; échéance = la plus proche
+    $solde     = 0.0;
+    $echeance  = null;
+    $nbImpayees = 0;
+    foreach (bd_facture_du_client($idClient) as $f) {
+        if (in_array($f['statut'], ['IMPAYEE', 'EN_RETARD'], true)) {
+            $solde += (float) $f['reste_a_payer'];
+            $nbImpayees++;
+            if ($echeance === null || $f['date_echeance'] < $echeance) {
+                $echeance = $f['date_echeance'];
+            }
+        }
+    }
+ 
+    // État de la saisie du mois (règles RG11 et RG12 : du 18 au dernier jour, une seule fois)
+    $jour  = (int) date('j');
+    $mois  = (int) date('n');
+    $annee = (int) date('Y');
+    $dernierJour = (int) date('t');
+ 
+    if (saisieExiste($idClient, $mois, $annee)) {
+        $etatSaisie = 'DEJA_SAISI';
+    } elseif ($jour < 18) {
+        $etatSaisie = 'HORS_PERIODE';
+    } else {
+        $etatSaisie = 'OUVERTE';
+    }
+ 
+    include ROOT . 'IHM/client/accueil.php';
 }
 
 function Auth_logout($param = null)
