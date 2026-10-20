@@ -1,7 +1,6 @@
 <?php 
 
 include_once(ROOT . 'BD/Utilisateur.php');
-
 const NB_ECHECS         = 5;
 const DUREE_BLOCAGE      = 15;
 const MINUTES_INACTIVITE = 15;
@@ -100,7 +99,14 @@ function Auth_accueil($param = null)
     exiger_role($_SESSION['role']);   // vérifie la connexion et l'expiration de session
  
     // ----- Fournisseur : page simple -----
+
     if ($_SESSION['role'] === 'FOURNISSEUR') {
+        require_once ROOT . 'BD/Tableau_bord.php';
+ 
+        $compteurs         = bd_tableau_compteurs();
+        $dernieresFactures = bd_tableau_dernieres_factures(5);
+        $infosFournisseur  = bd_tableau_infos_utilisateur($_SESSION['id_utilisateur']) ?: [];
+ 
         include ROOT . 'IHM/fournisseur/accueil.php';
         return;
     }

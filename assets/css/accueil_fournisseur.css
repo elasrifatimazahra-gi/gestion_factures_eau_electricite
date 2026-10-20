@@ -1,0 +1,112 @@
+/* Tableau de bord fournisseur (Membre 1)
+   À charger APRÈS Fournisseur.css (variables --green-*, --surface, --border, ...) */
+
+.dash-carte {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.dash-entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.dash-titre { margin: 0; font-size: 16px; font-weight: 700; color: var(--text); }
+.dash-voir-tout { font-size: 14px; font-weight: 600; color: var(--green-700); text-decoration: none; }
+.dash-voir-tout:hover { text-decoration: underline; }
+
+/* ---------- Liste « Points d'attention » ---------- */
+.dash-liste { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+
+.dash-ligne {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: #f7f8f7;
+  border: 1px solid #eef0ee;
+  border-radius: var(--radius-md);
+  color: var(--text);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background .15s ease;
+}
+a.dash-ligne:hover { background: #eff3f0; }
+.dash-ligne__libelle { flex: 1; }
+.dash-ligne svg { width: 16px; height: 16px; color: var(--text-muted); flex: none; }
+
+.dash-pastille {
+  min-width: 30px;
+  height: 26px;
+  padding: 0 8px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.dash-pastille--gris   { background: #e9ecea; color: #5d6b64; }
+.dash-pastille--rouge  { background: #fde2e2; color: #c23a3f; }
+.dash-pastille--ambre  { background: var(--amber-bg); color: var(--amber-text); }
+.dash-pastille--violet { background: #ece5fb; color: #6b46c1; }
+.dash-pastille--vert   { background: var(--green-100); color: var(--green-600); }
+
+/* ---------- Tableau « Dernières factures » ---------- */
+.dash-tableau-conteneur { overflow-x: auto; margin: 0 -24px -24px; }
+.dash-tableau { width: 100%; border-collapse: collapse; }
+
+.dash-tableau th {
+  padding: 14px 24px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: #fafbfa;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.dash-tableau td {
+  padding: 16px 24px;
+  text-align: center;
+  font-size: 13px;
+  color: #4b5a53;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.dash-tableau tr:last-child td { border-bottom: 0; }
+.dash-tableau th:first-child,
+.dash-tableau td:first-child { text-align: left; }
+.dash-tableau td.fort { font-weight: 700; color: var(--text); }
+.dash-tableau td.vide { text-align: center; color: var(--text-muted); padding: 32px; }
+
+/* ---------- Badges de statut ---------- */
+.dash-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.dash-badge--impayee { background: var(--amber-bg); color: var(--amber-text); }
+.dash-badge--retard  { background: #fde2e2; color: #c23a3f; }
+.dash-badge--payee   { background: var(--green-100); color: var(--green-600); }
+.dash-badge--annulee { background: #e9ecea; color: #5d6b64; }
+
+/* ---------- Menu : pages pas encore disponibles ---------- */
+.nav__link.is-disabled { opacity: .55; cursor: default; }
+.nav__link.is-disabled:hover { background: transparent; }
+
+.user__role { font-size: 10px; color: var(--text-muted); }
+
+@media (max-width: 960px) {
+  .dash-carte { padding: 18px; }
+  .dash-tableau-conteneur { margin: 0 -18px -18px; }
+}
