@@ -1,7 +1,9 @@
-<nav>
+<nav class="sidebar">
     <h3>Espace fournisseur</h3>
-    <ul>
-        <li><a href="index.php?page=clients">Clients</a></li>
-        <li><a href="index.php?page=anomalies">Anomalies</a></li>
+    <ul class="sidebar-menu">
+        <li><a href="<?= BASE_URL ?>Auth/accueil">Vue d'ensemble</a></li>
+        <li><a href="<?= BASE_URL ?>Client/index">Clients</a></li>
+        <li><a href="<?= BASE_URL ?>Anomalie/index">Anomalies</a></li>
+        <li><a href="<?= BASE_URL ?>Auth/logout">Se déconnecter</a></li>
     </ul>
 </nav>

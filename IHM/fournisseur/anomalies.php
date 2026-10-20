@@ -1,11 +1,25 @@
+```php
 <?php
 require_once __DIR__ . "/../../BD/Anomalie.php";
 
 $res = listerAnomalies();
 
-$mois = [1 => 'Janvier', 2 => 'Février', 3 => 'Mars', 4 => 'Avril', 5 => 'Mai', 6 => 'Juin',
-         7 => 'Juillet', 8 => 'Août', 9 => 'Septembre', 10 => 'Octobre', 11 => 'Novembre', 12 => 'Décembre'];
+$mois = [
+    1 => 'Janvier',
+    2 => 'Février',
+    3 => 'Mars',
+    4 => 'Avril',
+    5 => 'Mai',
+    6 => 'Juin',
+    7 => 'Juillet',
+    8 => 'Août',
+    9 => 'Septembre',
+    10 => 'Octobre',
+    11 => 'Novembre',
+    12 => 'Décembre'
+];
 ?>
+
 <table>
     <thead>
         <tr>
@@ -13,20 +27,76 @@ $mois = [1 => 'Janvier', 2 => 'Février', 3 => 'Mars', 4 => 'Avril', 5 => 'Mai',
             <th>Mois</th>
             <th>Type</th>
             <th>Statut</th>
-            <th></th>
+            <th>Actions</th>
         </tr>
     </thead>
+
     <tbody>
-    <?php while ($res && $a = mysqli_fetch_assoc($res)) {
-        $nomMois = isset($mois[(int) $a['mois']]) ? $mois[(int) $a['mois']] : $a['mois'];
-    ?>
-        <tr>
-            <td><?php echo htmlspecialchars($a['prenom'] . ' ' . $a['nom']); ?></td>
-            <td><?php echo htmlspecialchars($nomMois . ' ' . $a['annee']); ?></td>
-            <td><?php echo htmlspecialchars($a['type']); ?></td>
-            <td><?php echo $a['statut'] === 'ouverte' ? 'Ouverte' : 'Traitée'; ?></td>
-            <td><a href="anomalie_detail.php?id=<?php echo (int) $a['id_anomalie']; ?>">Voir le détail</a></td>
-        </tr>
-    <?php } ?>
+        <?php
+        $vide = true;
+
+        while ($res && ($a = mysqli_fetch_assoc($res))) {
+            $vide = false;
+
+            $numMois = (int) $a['mois'];
+            $nomMois = $mois[$numMois] ?? $a['mois'];
+
+            $statuts = [
+                'EN_ATTENTE' => 'En attente',
+                'CORRIGEE' => 'Corrigée',
+                'VALIDEE_FORCEE' => 'Validée de force',
+                'REJETEE' => 'Rejetée'
+            ];
+
+            $statut = $statuts[$a['statut']] ?? $a['statut'];
+        ?>
+
+            <tr>
+                <td>
+                    <?= htmlspecialchars(
+                        $a['prenom'] . ' ' . $a['nom'],
+                        ENT_QUOTES,
+                        'UTF-8'
+                    ) ?>
+                </td>
+
+                <td>
+                    <?= htmlspecialchars(
+                        $nomMois . ' ' . $a['annee'],
+                        ENT_QUOTES,
+                        'UTF-8'
+                    ) ?>
+                </td>
+
+                <td>
+                    <?= htmlspecialchars(
+                        $a['type'],
+                        ENT_QUOTES,
+                        'UTF-8'
+                    ) ?>
+                </td>
+
+                <td>
+                    <?= htmlspecialchars(
+                        $statut,
+                        ENT_QUOTES,
+                        'UTF-8'
+                    ) ?>
+                </td>
+
+                <td>
+                    <a href="anomalie_detail.php?id=<?= (int) $a['id_anomalie'] ?>">
+                        Voir le détail
+                    </a>
+                </td>
+            </tr>
+
+        <?php } ?>
+
+        <?php if ($vide): ?>
+            <tr>
+                <td colspan="5">Aucune anomalie trouvée.</td>
+            </tr>
+        <?php endif; ?>
     </tbody>
 </table>
