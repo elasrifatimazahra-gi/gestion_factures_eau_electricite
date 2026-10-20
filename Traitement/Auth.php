@@ -98,8 +98,7 @@ function Auth_accueil($param = null)
     }
     exiger_role($_SESSION['role']);   // vérifie la connexion et l'expiration de session
  
-    // ----- Fournisseur : page simple -----
-
+    // ----- Fournisseur : tableau de bord -----
     if ($_SESSION['role'] === 'FOURNISSEUR') {
         require_once ROOT . 'BD/Tableau_bord.php';
  
@@ -111,18 +110,30 @@ function Auth_accueil($param = null)
         return;
     }
  
-    // ----- Client : on prépare les données du tableau de bord -----
+    // ----- Client : vue d'ensemble -----
+    $d = auth_donnees_accueil_client((int) ($_SESSION['id_client'] ?? 0));
+    extract($d);   // crée $client, $solde, $echeance, $nbImpayees, $etatSaisie, $dernierJour, $mois,
+                   // $historique, $dernierEau, $dernierElec, $variationEau, $variationElec,
+                   // $estimationTtc, $dernieresFacturesClient
+    include ROOT . 'IHM/client/accueil.php';
+}
+ 
+/** Rassemble toutes les données de la « Vue d'ensemble » client. */
+function auth_donnees_accueil_client($idClient)
+{
     require_once ROOT . 'BD/Facture.php';
     require_once ROOT . 'BD/Consommation.php';
+    require_once ROOT . 'BD/Tableau_bord.php';
+    require_once ROOT . 'Traitement/Facturation.php';
  
-    $idClient = (int) ($_SESSION['id_client'] ?? 0);
-    $client   = bd_facture_infos_client($idClient) ?: ['nom' => '', 'prenom' => '', 'numero_client' => ''];
+    $client = bd_facture_infos_client($idClient) ?: ['nom' => '', 'prenom' => '', 'numero_client' => ''];
  
-    // Solde à payer = somme des factures impayées ou en retard ; échéance = la plus proche
-    $solde     = 0.0;
-    $echeance  = null;
+    // Factures : solde à payer, échéance la plus proche, 3 dernières factures
+    $factures   = bd_facture_du_client($idClient);
+    $solde      = 0.0;
+    $echeance   = null;
     $nbImpayees = 0;
-    foreach (bd_facture_du_client($idClient) as $f) {
+    foreach ($factures as $f) {
         if (in_array($f['statut'], ['IMPAYEE', 'EN_RETARD'], true)) {
             $solde += (float) $f['reste_a_payer'];
             $nbImpayees++;
@@ -132,12 +143,10 @@ function Auth_accueil($param = null)
         }
     }
  
-    // État de la saisie du mois (règles RG11 et RG12 : du 18 au dernier jour, une seule fois)
+    // État de la saisie du mois (RG11 et RG12)
     $jour  = (int) date('j');
     $mois  = (int) date('n');
     $annee = (int) date('Y');
-    $dernierJour = (int) date('t');
- 
     if (saisieExiste($idClient, $mois, $annee)) {
         $etatSaisie = 'DEJA_SAISI';
     } elseif ($jour < 18) {
@@ -146,7 +155,42 @@ function Auth_accueil($param = null)
         $etatSaisie = 'OUVERTE';
     }
  
-    include ROOT . 'IHM/client/accueil.php';
+    // Consommations : 6 derniers mois, dernier relevé et variation par rapport au mois précédent
+    $historique  = bd_tableau_consommations_client($idClient, 6);
+    $dernier     = $historique ? end($historique) : null;
+    $precedent   = count($historique) > 1 ? $historique[count($historique) - 2] : null;
+ 
+    $variation = function ($champ) use ($dernier, $precedent) {
+        if (!$dernier || !$precedent || (float) $precedent[$champ] <= 0) {
+            return null;
+        }
+        return round(((float) $dernier[$champ] - (float) $precedent[$champ]) / (float) $precedent[$champ] * 100);
+    };
+ 
+    // Estimation de la prochaine facture : dernier relevé x barème actuel + TVA
+    $estimationTtc = null;
+    if ($dernier) {
+        $ht  = calculerMontantFluide('EAU', $dernier['conso_eau']) + calculerMontantFluide('ELECTRICITE', $dernier['conso_elec']);
+        $tva = $ht * (float) lireParametre('TVA_POURCENT', 18) / 100;
+        $estimationTtc = round($ht + $tva, 2);
+    }
+ 
+    return [
+        'client'                   => $client,
+        'solde'                    => $solde,
+        'echeance'                 => $echeance,
+        'nbImpayees'               => $nbImpayees,
+        'etatSaisie'               => $etatSaisie,
+        'dernierJour'              => (int) date('t'),
+        'mois'                     => $mois,
+        'historique'               => $historique,
+        'dernierEau'               => $dernier ? (int) $dernier['conso_eau'] : null,
+        'dernierElec'              => $dernier ? (int) $dernier['conso_elec'] : null,
+        'variationEau'             => $variation('conso_eau'),
+        'variationElec'            => $variation('conso_elec'),
+        'estimationTtc'            => $estimationTtc,
+        'dernieresFacturesClient'  => array_slice($factures, 0, 3),
+    ];
 }
 
 function Auth_logout($param = null)

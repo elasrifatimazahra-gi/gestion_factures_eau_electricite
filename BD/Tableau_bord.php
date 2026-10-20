@@ -1,5 +1,5 @@
 <?php
-// Requêtes du tableau de bord fournisseur (Membre 1)
+// Requêtes des tableaux de bord (Membre 1) : espace fournisseur + espace client
 require_once __DIR__ . '/Connexion.php';
 
 /** Compte les lignes renvoyées par un "SELECT COUNT(*) ..." */
@@ -10,6 +10,8 @@ function bd_tableau_compter($sql)
     $ligne = $res ? mysqli_fetch_row($res) : null;
     return $ligne ? (int) $ligne[0] : 0;
 }
+
+/* ===================== ESPACE FOURNISSEUR ===================== */
 
 /** Les chiffres affichés dans « Points d'attention ». */
 function bd_tableau_compteurs()
@@ -47,4 +49,26 @@ function bd_tableau_infos_utilisateur($idUtilisateur)
     $idUtilisateur = (int) $idUtilisateur;
     $res = mysqli_query($link, "SELECT identifiant, email FROM utilisateurs WHERE id_utilisateur = $idUtilisateur");
     return $res ? mysqli_fetch_assoc($res) : null;
+}
+
+/* ===================== ESPACE CLIENT ===================== */
+
+/**
+ * Les $nb dernières consommations valides d'un client, de la plus ancienne à la plus récente
+ * (pour la courbe « Votre consommation »).
+ */
+function bd_tableau_consommations_client($idClient, $nb = 6)
+{
+    $link = Connexion();
+    $idClient = (int) $idClient;
+    $nb = (int) $nb;
+    $res = mysqli_query($link, "SELECT annee, mois, conso_eau, conso_elec
+                                FROM consommations
+                                WHERE id_client = $idClient
+                                  AND statut IN ('VALIDE', 'REGULARISEE')
+                                  AND conso_eau >= 0 AND conso_elec >= 0
+                                ORDER BY annee DESC, mois DESC
+                                LIMIT $nb");
+    $lignes = $res ? mysqli_fetch_all($res, MYSQLI_ASSOC) : [];
+    return array_reverse($lignes);
 }
