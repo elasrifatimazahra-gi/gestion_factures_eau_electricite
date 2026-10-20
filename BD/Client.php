@@ -40,10 +40,11 @@ function genererNumClient(){
     }
 
 
-function ajouter($id_utilisateur, $cin, $nom, $prenom, $adresse, $telephone, $numero_compteur_eau, $numero_compteur_elec,$index_initial_eau,$index_initial_elec) {
+function ajouter($id_utilisateur, $numero_client, $cin, $nom, $prenom, $adresse, $telephone, $numero_compteur_eau, $numero_compteur_elec, $index_initial_eau, $index_initial_elec) {
     global $link;
-    $numero_client = genererNumClient();
-    //Securite
+    
+    // Securite
+    $numero_client        = mysqli_real_escape_string($link, $numero_client);
     $cin                  = mysqli_real_escape_string($link, $cin);
     $nom                  = mysqli_real_escape_string($link, $nom);
     $prenom               = mysqli_real_escape_string($link, $prenom);
@@ -51,14 +52,21 @@ function ajouter($id_utilisateur, $cin, $nom, $prenom, $adresse, $telephone, $nu
     $telephone            = mysqli_real_escape_string($link, $telephone);
     $numero_compteur_eau  = mysqli_real_escape_string($link, $numero_compteur_eau);
     $numero_compteur_elec = mysqli_real_escape_string($link, $numero_compteur_elec);
-    $index_initial_eau    = mysqli_real_escape_string($link,$index_initial_eau);
-    $index_initial_elec   = mysqli_real_escape_string($link,$index_initial_elec);
+    $index_initial_eau    = mysqli_real_escape_string($link, $index_initial_eau);
+    $index_initial_elec   = mysqli_real_escape_string($link, $index_initial_elec);
    
     $sql = "INSERT INTO clients (id_utilisateur, numero_client, cin, nom, prenom, adresse, telephone, numero_compteur_eau, numero_compteur_elec, index_initial_eau, index_initial_elec)
-     VALUES ('$id_utilisateur', '$numero_client','$cin', '$nom', '$prenom', '$adresse',  '$telephone', '$numero_compteur_eau', '$numero_compteur_elec', '$index_initial_eau', '$index_initial_elec')";
+            VALUES ('$id_utilisateur', '$numero_client', '$cin', '$nom', '$prenom', '$adresse', '$telephone', '$numero_compteur_eau', '$numero_compteur_elec', '$index_initial_eau', '$index_initial_elec')";
             
-    return mysqli_query($link, $sql);
+    $res = mysqli_query($link, $sql);
+    
+    if ($res) {
+        return true; 
+    } else {
+        return false; 
+    }
 }
+
 
 function modifier($id_client, $cin, $nom, $prenom, $adresse, $telephone, $numero_compteur_eau, $numero_compteur_elec,$index_initial_eau, $index_initial_elec) {
     global $link;

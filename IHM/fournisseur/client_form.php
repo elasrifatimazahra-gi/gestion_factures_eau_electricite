@@ -1,5 +1,10 @@
 <center>
-    <form method="post" action="../Client/add">
+    <form method="post" action="<?= BASE_URL ?>Client/ajouter">
+        <?php if (isset($erreur)){ ?>
+    <div style="color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
+        <?= $erreur; ?>
+    </div>
+        <?php } ?>
         <table>
             <tr>
                 <td>Nom</td>
@@ -37,10 +42,6 @@
             <tr>
                 <td>Index initial electricite</td>
                 <td><input type="number" name="index_initial_elec" min="0" required></td>
-            </tr>
-            <tr>
-                <td>Mot de passe</td>
-                <td><input type="password" name="mot_de_passe" required></td>
             </tr>
             <tr>
                 <td><input type="submit" value="Ajouter le client"></td>

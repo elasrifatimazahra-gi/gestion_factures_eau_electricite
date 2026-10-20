@@ -62,3 +62,27 @@ function bd_utilisateur_id_client($id_utilisateur)
     $ligne = mysqli_fetch_assoc($res);
     return $ligne ? (int) $ligne['id_client'] : null;
 }
+
+// Creer un nouvel utilisateur et retourne son ID
+function bd_utilisateur_creer($identifiant, $mot_de_passe_clair, $role = 'CLIENT')
+{
+    $link = Connexion();
+    
+    //On hache le mot de passe avant de l'enregistrer
+    $mdp_hash = password_hash($mot_de_passe_clair, PASSWORD_DEFAULT);
+    
+    $sql = "INSERT INTO utilisateurs (identifiant, mot_de_passe, role) VALUES (?, ?, ?)";
+    
+    $stmt = mysqli_prepare($link, $sql);
+    mysqli_stmt_bind_param($stmt, "sss", $identifiant, $mdp_hash, $role);
+    
+    if (mysqli_stmt_execute($stmt)) {
+        // Retourne le dernier ID insere par l'Auto-Increment
+        $id_insere = mysqli_insert_id($link);
+        mysqli_stmt_close($stmt);
+        return $id_insere;
+    } else {
+        mysqli_stmt_close($stmt);
+        return false;
+    }
+}

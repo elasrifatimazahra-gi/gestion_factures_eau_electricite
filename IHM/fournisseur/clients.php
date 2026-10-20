@@ -15,6 +15,14 @@
     <a href="<?= BASE_URL ?>Client/add" class="btn-submit">+ Ajouter client</a>
 </div>
 
+<?php if(isset($_SESSION['msg_succes'])){ ?>
+     <div style="color: #155724; background-color: #d4edda; border: 1px solid #c3e6cb; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
+        <?= $_SESSION['msg_succes'] ?>
+    </div>
+        <?php unset($_SESSION['msg_succes']); //faire disparaitre le message de succes 
+        } ?>
+
+
 <!-- Tableau des clients -->
 <div class="conteneur-table">
     <table class="table-clients">
