@@ -332,3 +332,16 @@ body {
 .pied button:hover {
     background: var(--vert);
 }
+
+@media (max-width: 768px) {
+    .sidebar {
+        position: static;
+        width: 100%;
+    }
+    .main {
+        margin-left: 0;
+    }
+    .grille {
+        grid-template-columns: 1fr;
+    }
+}
