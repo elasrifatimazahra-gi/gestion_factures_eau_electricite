@@ -1,4 +1,4 @@
-/* Pages de connexion client et fournisseur (Membre 1) */
+/* Pages de connexion client et fournisseur */
 :root {
     --vert: #166445;
     --vert-fonce: #0f3b2c;
@@ -34,7 +34,15 @@ a { color: inherit; }
     color: #fff;
     background: var(--vert);
 }
-.auth-marque-nom { font-weight: 700; font-size: 22px; line-height: 1.1; }
+.auth-marque-nom {
+    color: #e8d39a;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 30px;
+    font-style: italic;
+    font-weight: 700;
+    letter-spacing: .03em;
+    line-height: 1.1;
+}
 .auth-marque-sous { font-size: 12px; color: #cfe3d8; margin-top: 2px; }
 
 .auth-accroche { max-width: 440px; }
@@ -98,10 +106,17 @@ a { color: inherit; }
 }
 .auth-bloc h2 {
     margin: 0 0 10px;
-    font-size: 40px;
+    font-size: 38px;
     font-weight: 500;
     letter-spacing: -.02em;
     line-height: 1.1;
+}
+.auth-bienvenue-marque {
+    color: #b7791f;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-style: italic;
+    font-weight: 700;
+    letter-spacing: 0;
 }
 .auth-sous-titre { margin: 0 0 28px; font-size: 15px; line-height: 1.5; color: var(--gris); }
 

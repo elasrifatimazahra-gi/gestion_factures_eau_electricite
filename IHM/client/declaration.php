@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Ma déclaration</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/factures.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/factures.css?v=<?= filemtime(ROOT . 'assets/css/factures.css') ?>">
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/consommation.css">
     <script src="<?= BASE_URL ?>assets/js/declaration.js" defer></script>
 </head>
@@ -16,7 +16,7 @@
 
     <div class="principal">
         <header class="topbar">
-            <div class="statut-portail"><span class="point-vert"></span> Portail opérationnel</div>
+            <div class="statut-portail"><span class="point-vert"></span> Amanor opérationnel</div>
             <div class="topbar-droite">
                 <a class="deconnexion" href="<?= BASE_URL ?>Auth/logout">Déconnexion</a>
             </div>

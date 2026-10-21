@@ -4,8 +4,6 @@ require_once ROOT . 'Traitement/Auth.php';
     function Client_index()
     {
         exiger_role('FOURNISSEUR');
-        require_once ROOT . 'BD/Tableau_bord.php';
-        $infosFournisseur = bd_tableau_infos_utilisateur($_SESSION['id_utilisateur']) ?: [];
 
         if (isset($_GET['search']) && !empty(trim($_GET['search']))) {
             $terme = trim($_GET['search']);

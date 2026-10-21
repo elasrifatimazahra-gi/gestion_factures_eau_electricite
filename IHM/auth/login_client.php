@@ -6,16 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Connexion client</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
-    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/auth.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/auth.css?v=<?= filemtime(ROOT . 'assets/css/auth.css') ?>">
 </head>
 <body class="auth-client">
 <main class="auth-page">
 
     <section class="auth-visuel">
-        <div>
-            <div class="auth-marque-nom">Portail</div>
-            <div class="auth-marque-sous">Eau &amp; Électricité</div>
-        </div>
+        <div aria-hidden="true"></div>
 
         <div class="auth-accroche">
             <span class="auth-surtitre">Votre espace en ligne</span>
@@ -31,7 +28,7 @@
 
         <div class="auth-bloc">
             <span class="auth-etiquette">Espace client</span>
-            <h2>Bienvenue</h2>
+            <h2>Bienvenue chez<br><span class="auth-bienvenue-marque">Amanor</span></h2>
             <p class="auth-sous-titre">Connectez-vous pour accéder à votre espace personnel.</p>
 
             <?php if ($erreur): ?>
@@ -58,9 +55,9 @@
 
             <p class="auth-pied">Pas encore client ? <strong>Rendez-vous dans votre agence.</strong></p>
             <div style="text-align:center">
-                <a class="auth-lien" href="<?= BASE_URL ?>Auth/login_fournisseur">Espace fournisseur</a>
+                <a class="auth-lien" href="<?= BASE_URL ?>Auth/login_fournisseur">Connexion fournisseur</a>
             </div>
-            <div class="auth-copyright">© <?= date('Y') ?> Portail Eau &amp; Électricité · Aide et confidentialité</div>
+            <div class="auth-copyright">© <?= date('Y') ?> Amanor · Aide et confidentialité</div>
         </div>
     </section>
 

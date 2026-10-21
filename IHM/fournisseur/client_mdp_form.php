@@ -1,4 +1,8 @@
-<?php include ROOT . 'IHM/layouts/header.php'; ?>
+<?php
+$titreFournisseur = $titre_page ?? 'Changer le mot de passe';
+$sousTitreFournisseur = 'Définissez un nouveau mot de passe pour le compte.';
+include ROOT . 'IHM/layouts/fournisseur_header.php';
+?>
 
 <div class="formulaire-client-page">
     <a href="<?= BASE_URL . (isset($id_client) ? 'Client/index' : 'Auth/accueil') ?>" class="retour-clients">&larr; Retour</a>
@@ -22,4 +26,4 @@
     </div>
 </div>
 
-<?php include ROOT . 'IHM/layouts/footer.php'; ?>
+<?php include ROOT . 'IHM/layouts/fournisseur_footer.php'; ?>

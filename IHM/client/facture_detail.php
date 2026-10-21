@@ -67,12 +67,12 @@ $photos = [
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Facture <?= htmlspecialchars($facture['numero_facture']) ?></title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap">
-    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/facture_detail.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/facture_detail.css?v=<?= filemtime(ROOT . 'assets/css/facture_detail.css') ?>">
 </head>
 <body>
 
 <header class="barre">
-    <div class="barre-nom"><?= $ico('goutte') ?> Eau &amp; Électricité</div>
+    <div class="barre-nom barre-nom--amanor">Amanor</div>
     <div class="barre-droite">
         <span class="nom-client"><?= htmlspecialchars($nomClient) ?></span>
         <a class="btn-deco" href="<?= BASE_URL ?>Auth/logout"><?= $ico('sortie') ?> Déconnexion</a>
@@ -111,10 +111,8 @@ $photos = [
                 <!-- En-tête -->
                 <div class="f-entete">
                     <div class="marque">
-                        <div class="marque-logo"><?= $ico('goutte') ?></div>
                         <div>
-                            <div class="marque-nom">Service Régional</div>
-                            <div class="marque-sous">Eau &amp; Électricité</div>
+                            <div class="marque-nom marque-nom--amanor">Amanor</div>
                         </div>
                     </div>
                     <div class="f-droite">

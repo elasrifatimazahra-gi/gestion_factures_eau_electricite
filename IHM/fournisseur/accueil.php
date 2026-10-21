@@ -1,12 +1,11 @@
 <?php
 // Variables reçues de Auth_accueil() :
-// $compteurs, $dernieresFactures, $infosFournisseur
+// $statistiquesClients, $dernieresFactures, $infosFournisseur
 
 $email = $infosFournisseur['email'] ?? ($infosFournisseur['identifiant'] ?? '');
 $initiales = strtoupper(substr($email !== '' ? $email : 'AD', 0, 2));
 
 $icones = [
-    'goutte'   => '<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>',
     'tableau'  => '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
     'clients'  => '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
     'anomalie' => '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
@@ -40,15 +39,6 @@ $menu = [
     ['Journal',         '#',                         'journal',    false, false],
 ];
 
-// [chiffre, libellé, lien, couleur de la pastille]
-$points = [
-    [$compteurs['anomalies'], 'Anomalies à traiter',   BASE_URL . 'Anomalie/index', 'ambre'],
-    [$compteurs['bloques'],   'Comptes bloqués',       BASE_URL . 'Client/index',   'rouge'],
-    [$compteurs['impayees'],  'Factures impayées',     null,                        'ambre'],
-    [$compteurs['en_retard'], 'Factures en retard',    null,                        'rouge'],
-    [$compteurs['clients'],   'Clients enregistrés',   BASE_URL . 'Client/index',   'gris'],
-];
-
 $statuts = [
     'IMPAYEE'   => ['Impayée',   'impayee'],
     'EN_RETARD' => ['En retard', 'retard'],
@@ -63,23 +53,18 @@ $statuts = [
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Tableau de bord</title>
     <!-- Fournisseur.css = gabarit commun fournisseur (menu, barre du haut) -->
-    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/Fournisseur.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/Fournisseur.css?v=<?= filemtime(ROOT . 'assets/css/Fournisseur.css') ?>">
     <!-- accueil_fournisseur.css (Membre 1) = éléments propres à cette page -->
-    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/accueil_fournisseur.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/accueil_fournisseur.css?v=<?= filemtime(ROOT . 'assets/css/accueil_fournisseur.css') ?>">
 </head>
 <body>
 <div class="app">
 
     <aside class="sidebar">
         <div class="brand">
-            <div class="brand__logo"><?= $ico('goutte') ?></div>
-            <div>
-                <div class="brand__name">Portail</div>
-                <div class="brand__tag">Eau &amp; Électricité</div>
-            </div>
+            <div class="brand__name brand__name--amanor">Amanor</div>
         </div>
 
-        <div class="sidebar__section">Espace fournisseur</div>
         <ul class="nav">
             <?php foreach ($menu as [$libelle, $lien, $icone, $actif, $dispo]): ?>
                 <li>
@@ -106,7 +91,7 @@ $statuts = [
         <header class="topbar">
             <div>
                 <h1 class="topbar__title">Tableau de bord</h1>
-                <p class="topbar__subtitle">Vue d'ensemble de l'activité et des points d'attention.</p>
+                <p class="topbar__subtitle">Vue d'ensemble de l'activité de votre service.</p>
             </div>
             <div class="topbar__actions">
                 <div class="lang">
@@ -126,23 +111,28 @@ $statuts = [
 
         <main class="content">
 
-            <!-- Points d'attention -->
-            <section class="dash-carte">
-                <div class="dash-entete">
-                    <h2 class="dash-titre">Points d'attention</h2>
+            <section class="clients-resume">
+                <div class="clients-resume__entete">
+                    <h2>Clients</h2>
+                    <p>Recherchez, ajoutez et gérez les comptes clients.</p>
                 </div>
-                <ul class="dash-liste">
-                    <?php foreach ($points as [$nombre, $libelle, $lien, $couleur]): ?>
-                        <li>
-                            <?php $balise = $lien ? 'a' : 'div'; ?>
-                            <<?= $balise ?> class="dash-ligne"<?= $lien ? ' href="' . htmlspecialchars($lien) . '"' : '' ?>>
-                                <span class="dash-pastille dash-pastille--<?= $couleur ?>"><?= (int) $nombre ?></span>
-                                <span class="dash-ligne__libelle"><?= htmlspecialchars($libelle) ?></span>
-                                <?php if ($lien): ?><?= $ico('chevron') ?><?php endif; ?>
-                            </<?= $balise ?>>
-                        </li>
-                    <?php endforeach; ?>
-                </ul>
+                <div class="clients-resume__cartes">
+                    <a class="clients-resume__carte" href="<?= BASE_URL ?>Client/index">
+                        <span class="clients-resume__libelle">Total clients</span>
+                        <span class="clients-resume__badge clients-resume__badge--bleu">+<?= (int) $statistiquesClients['nouveaux_mois'] ?> ce mois</span>
+                        <strong><?= number_format((int) $statistiquesClients['total'], 0, ',', ' ') ?></strong>
+                    </a>
+                    <a class="clients-resume__carte" href="<?= BASE_URL ?>Client/index">
+                        <span class="clients-resume__libelle">Comptes actifs</span>
+                        <span class="clients-resume__badge clients-resume__badge--vert"><?= (int) $statistiquesClients['total'] > 0 ? number_format((int) $statistiquesClients['actifs'] * 100 / (int) $statistiquesClients['total'], 1, ',', ' ') : '0,0' ?> % du parc</span>
+                        <strong><?= number_format((int) $statistiquesClients['actifs'], 0, ',', ' ') ?></strong>
+                    </a>
+                    <div class="clients-resume__carte">
+                        <span class="clients-resume__libelle">En retard</span>
+                        <span class="clients-resume__badge clients-resume__badge--ambre"><?= number_format((float) $statistiquesClients['montant_retard'], 2, ',', ' ') ?> DH</span>
+                        <strong><?= number_format((int) $statistiquesClients['retards'], 0, ',', ' ') ?></strong>
+                    </div>
+                </div>
             </section>
 
             <!-- Dernières factures -->

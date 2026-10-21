@@ -1,8 +1,8 @@
 ```php
 <?php
-require_once __DIR__ . "/../../BD/Anomalie.php";
-
-$res = listerAnomalies();
+$titreFournisseur = 'Anomalies';
+$sousTitreFournisseur = 'Consultez et traitez les anomalies de consommation.';
+include ROOT . 'IHM/layouts/fournisseur_header.php';
 
 $mois = [
     1 => 'Janvier',
@@ -20,7 +20,18 @@ $mois = [
 ];
 ?>
 
-<table>
+<?php if (isset($_SESSION['erreur'])): ?>
+    <div class="clients-message clients-message--error"><?= htmlspecialchars($_SESSION['erreur']) ?></div>
+    <?php unset($_SESSION['erreur']); ?>
+<?php endif; ?>
+<?php if (isset($_SESSION['message'])): ?>
+    <div class="clients-message clients-message--success"><?= htmlspecialchars($_SESSION['message']) ?></div>
+    <?php unset($_SESSION['message']); ?>
+<?php endif; ?>
+
+<section class="dash-carte fournisseur-table-card">
+<div class="clients-table-scroll">
+<table class="dash-tableau">
     <thead>
         <tr>
             <th>Client</th>
@@ -85,7 +96,7 @@ $mois = [
                 </td>
 
                 <td>
-                    <a href="anomalie_detail.php?id=<?= (int) $a['id_anomalie'] ?>">
+                    <a class="anomalie-detail-link" href="<?= BASE_URL ?>Anomalie/detail/<?= (int) $a['id_anomalie'] ?>">
                         Voir le détail
                     </a>
                 </td>
@@ -95,8 +106,11 @@ $mois = [
 
         <?php if ($vide): ?>
             <tr>
-                <td colspan="5">Aucune anomalie trouvée.</td>
+                <td class="vide" colspan="5">Aucune anomalie trouvée.</td>
             </tr>
         <?php endif; ?>
     </tbody>
 </table>
+</div>
+</section>
+<?php include ROOT . 'IHM/layouts/fournisseur_footer.php'; ?>

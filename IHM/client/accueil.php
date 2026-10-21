@@ -134,7 +134,7 @@ $conseils = [
     <title>Espace client</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <!-- factures.css (Membre 5) = gabarit commun : barre latérale, barre du haut, cartes, badges -->
-    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/factures.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/factures.css?v=<?= filemtime(ROOT . 'assets/css/factures.css') ?>">
     <!-- accueil.css (Membre 1) = éléments propres à la vue d'ensemble -->
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/accueil.css?v=<?= @filemtime(ROOT . 'assets/css/accueil.css') ?>">
 </head>
@@ -143,11 +143,7 @@ $conseils = [
 
     <aside class="sidebar">
         <div class="marque">
-            <div class="marque-logo"><?= $ico('goutte') ?></div>
-            <div>
-                <div class="marque-nom">Portail</div>
-                <div class="marque-sous">EAU &amp; ÉLECTRICITÉ</div>
-            </div>
+            <div class="marque-nom marque-nom--amanor">Amanor</div>
         </div>
 
         <div class="nav-titre">MON ESPACE</div>
@@ -172,7 +168,7 @@ $conseils = [
 
     <div class="principal">
         <header class="topbar">
-            <div class="statut-portail"><span class="point-vert"></span> Portail opérationnel</div>
+            <div class="statut-portail"><span class="point-vert"></span> Amanor opérationnel</div>
             <div class="topbar-droite">
                 <div class="langues"><span class="actif">FR</span><span>AR</span></div>
                 <span class="cloche"><?= $ico('cloche') ?></span>

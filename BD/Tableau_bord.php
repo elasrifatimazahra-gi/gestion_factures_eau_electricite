@@ -13,7 +13,7 @@ function bd_tableau_compter($sql)
 
 /* ===================== ESPACE FOURNISSEUR ===================== */
 
-/** Les chiffres affichés dans « Points d'attention ». */
+/** Compteurs conservés pour les indicateurs du tableau de bord. */
 function bd_tableau_compteurs()
 {
     return [
@@ -26,6 +26,33 @@ function bd_tableau_compteurs()
         'en_retard' => bd_tableau_compter("SELECT COUNT(*) FROM factures WHERE statut = 'EN_RETARD'"),
         'clients'   => bd_tableau_compter("SELECT COUNT(*) FROM clients"),
     ];
+}
+
+/** Statistiques des clients affichées sur le tableau de bord fournisseur. */
+function bd_tableau_statistiques_clients()
+{
+    $link = Connexion();
+    $sql = "SELECT
+                (SELECT COUNT(*) FROM clients) AS total,
+                (SELECT COUNT(*)
+                 FROM clients c
+                 INNER JOIN utilisateurs u ON c.id_utilisateur = u.id_utilisateur
+                 WHERE u.statut_compte = 'ACTIF'
+                   AND (u.bloque_jusqu_a IS NULL OR u.bloque_jusqu_a <= NOW())) AS actifs,
+                (SELECT COUNT(*)
+                 FROM clients
+                 WHERE created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')) AS nouveaux_mois,
+                (SELECT COUNT(*) FROM factures WHERE statut = 'EN_RETARD') AS retards,
+                (SELECT COALESCE(SUM(reste_a_payer), 0)
+                 FROM factures
+                 WHERE statut = 'EN_RETARD') AS montant_retard";
+    $res = mysqli_query($link, $sql);
+
+    if (!$res) {
+        throw new RuntimeException("Impossible de récupérer les statistiques des clients : " . mysqli_error($link));
+    }
+
+    return mysqli_fetch_assoc($res);
 }
 
 /** Les dernières factures émises, avec le nom du client. */

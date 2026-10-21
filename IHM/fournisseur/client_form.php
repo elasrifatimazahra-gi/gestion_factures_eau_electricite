@@ -1,4 +1,8 @@
-<?php include ROOT . 'IHM/layouts/header.php'; ?>
+<?php
+$titreFournisseur = $bouton_formulaire;
+$sousTitreFournisseur = 'Renseignez les informations du client.';
+include ROOT . 'IHM/layouts/fournisseur_header.php';
+?>
 
 <div class="formulaire-client-page">
     <a href="<?= BASE_URL ?>Client/index" class="retour-clients">&larr; Retour à la liste des clients</a>
@@ -9,7 +13,7 @@
             <div class="erreur-client"><?= htmlspecialchars($erreur) ?></div>
         <?php } ?>
 
-        <form method="post" action="<?= BASE_URL . $action_formulaire ?>" class="formulaire-client">
+        <form method="post" action="<?= BASE_URL . $action_formulaire ?>" class="formulaire-client fournisseur-form">
             <div class="champ-client">
                 <label for="nom">Nom</label>
                 <input type="text" id="nom" name="nom" value="<?= htmlspecialchars($client_actuel['nom'] ?? '') ?>" required>
@@ -55,4 +59,4 @@
     </div>
 </div>
 
-<?php include ROOT . 'IHM/layouts/footer.php'; ?>
+<?php include ROOT . 'IHM/layouts/fournisseur_footer.php'; ?>

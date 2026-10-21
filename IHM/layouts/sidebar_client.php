@@ -33,11 +33,7 @@ $menu = [
 ?>
 <aside class="sidebar">
     <div class="marque">
-        <div class="marque-logo"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><?= $icones['goutte'] ?></svg></div>
-        <div>
-            <div class="marque-nom">Portail</div>
-            <div class="marque-sous">EAU &amp; ÉLECTRICITÉ</div>
-        </div>
+        <div class="marque-nom marque-nom--amanor">Amanor</div>
     </div>
 
     <div class="nav-titre">MON ESPACE</div>

@@ -39,18 +39,14 @@ $menu = [
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Mes factures</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/factures.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/factures.css?v=<?= filemtime(ROOT . 'assets/css/factures.css') ?>">
 </head>
 <body>
 <div class="appli">
 
     <aside class="sidebar">
         <div class="marque">
-            <div class="marque-logo"><?= $ico('goutte') ?></div>
-            <div>
-                <div class="marque-nom">Portail</div>
-                <div class="marque-sous">EAU &amp; ÉLECTRICITÉ</div>
-            </div>
+            <div class="marque-nom marque-nom--amanor">Amanor</div>
         </div>
 
         <div class="nav-titre">MON ESPACE</div>
@@ -75,7 +71,7 @@ $menu = [
 
     <div class="principal">
         <header class="topbar">
-            <div class="statut-portail"><span class="point-vert"></span> Portail opérationnel</div>
+            <div class="statut-portail"><span class="point-vert"></span> Amanor opérationnel</div>
             <div class="topbar-droite">
                 <div class="langues"><span class="actif">FR</span><span>AR</span></div>
                 <span class="cloche"><?= $ico('cloche') ?></span>

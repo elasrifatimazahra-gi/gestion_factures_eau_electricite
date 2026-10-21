@@ -146,6 +146,14 @@ h2 {
     margin-bottom: 20px;
 }
 
+.sidebar h3.brand__name--amanor {
+    color: #e8d39a;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 25px;
+    font-style: italic;
+    letter-spacing: .03em;
+}
+
 .sidebar ul {
     list-style: none;
 }

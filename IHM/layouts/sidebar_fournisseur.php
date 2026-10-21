@@ -1,5 +1,5 @@
 <nav class="sidebar">
-    <h3>Espace fournisseur</h3>
+    <h3 class="brand__name--amanor">Amanor</h3>
     <ul class="sidebar-menu">
         <li><a href="<?= BASE_URL ?>Auth/accueil">Vue d'ensemble</a></li>
         <li><a href="<?= BASE_URL ?>Client/index">Clients</a></li>

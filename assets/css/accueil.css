@@ -1,7 +1,3 @@
-/* Vue d'ensemble client (Membre 1)
-   À charger APRÈS factures.css : réutilise ses variables (--vert-sombre, --vert-bouton,
-   --texte, --gris, --bord) et ses composants (.carte, .badge, .oeil, .nav-item, ...) */
-
 /* ---------- En-tête ---------- */
 .accueil-entete { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
 .eyebrow { margin: 0 0 8px; font-size: 12px; font-weight: 700; letter-spacing: .14em; color: #a8650b; }

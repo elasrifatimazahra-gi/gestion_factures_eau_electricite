@@ -102,7 +102,7 @@ function Auth_accueil($param = null)
     if ($_SESSION['role'] === 'FOURNISSEUR') {
         require_once ROOT . 'BD/Tableau_bord.php';
  
-        $compteurs         = bd_tableau_compteurs();
+        $statistiquesClients = bd_tableau_statistiques_clients();
         $dernieresFactures = bd_tableau_dernieres_factures(5);
         $infosFournisseur  = bd_tableau_infos_utilisateur($_SESSION['id_utilisateur']) ?: [];
  
@@ -225,4 +225,3 @@ function exiger_role($role)
         exit;
     }
 }
-

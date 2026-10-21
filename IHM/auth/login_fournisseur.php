@@ -6,15 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Connexion fournisseur</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
-    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/auth.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/auth.css?v=<?= filemtime(ROOT . 'assets/css/auth.css') ?>">
 </head>
 <body class="auth-fournisseur">
 <main class="auth-page">
 
     <section class="auth-visuel">
         <div>
-            <div class="auth-marque-nom">Portail</div>
-            <div class="auth-marque-sous">Eau &amp; Électricité</div>
+            <div class="auth-marque-nom">Amanor</div>
         </div>
 
         <div class="auth-accroche">

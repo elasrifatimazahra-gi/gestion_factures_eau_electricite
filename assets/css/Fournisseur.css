@@ -1,7 +1,3 @@
-/* ==========================================================
-   Portail – Styles communs de l espace fournisseur (variables, layout, sidebar, topbar)
-   À charger sur TOUTES les pages, avant le CSS de la page.
-   ========================================================== */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
 :root {
@@ -95,6 +91,15 @@ body {
   font-weight: 700;
   line-height: 1.1;
   color: #fff;
+}
+
+.brand__name--amanor {
+  color: #e8d39a;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 27px;
+  font-style: italic;
+  font-weight: 700;
+  letter-spacing: .03em;
 }
 
 .brand__tag {
@@ -368,6 +373,96 @@ body {
 .clients-action:hover { filter: brightness(.92); }
 .clients-empty { padding: 32px !important; text-align: center !important; color: var(--text-muted) !important; }
 
+/* ---------- Formulaires fournisseur ---------- */
+.formulaire-client-page { max-width: 760px; margin: 0 auto; }
+.retour-clients {
+  display: inline-block;
+  margin-bottom: 18px;
+  color: var(--green-700);
+  font-weight: 600;
+  text-decoration: none;
+}
+.retour-clients:hover { text-decoration: underline; }
+.formulaire-client-carte {
+  padding: 28px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+.formulaire-client-carte h2 { margin: 0 0 22px; font-size: 20px; }
+.formulaire-client {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 20px;
+}
+.fournisseur-form .champ-client { display: flex; flex-direction: column; gap: 7px; }
+.fournisseur-form .champ-client label { font-size: 13px; font-weight: 600; }
+.fournisseur-form .champ-client input,
+.formulaire-mdp .champ-client input {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--text);
+  font: 400 14px var(--font);
+}
+.fournisseur-form .champ-client input:focus,
+.formulaire-mdp .champ-client input:focus {
+  border-color: var(--green-600);
+  outline: 2px solid rgba(47, 125, 79, .15);
+}
+.formulaire-mdp { max-width: 480px; }
+.formulaire-mdp .champ-client { display: flex; flex-direction: column; gap: 7px; }
+.formulaire-mdp .champ-client label { font-size: 13px; font-weight: 600; }
+.actions-formulaire-client {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  grid-column: 1 / -1;
+  margin-top: 6px;
+}
+.bouton-client,
+.bouton-annuler-client {
+  min-height: 42px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  font: 600 14px var(--font);
+  cursor: pointer;
+}
+.bouton-client { background: var(--green-900); color: #fff; }
+.bouton-client:hover { background: var(--green-800); }
+.bouton-annuler-client { background: #edf1ee; color: var(--text); }
+.erreur-client {
+  margin-bottom: 18px;
+  padding: 12px 15px;
+  border: 1px solid #f5c6cb;
+  border-radius: var(--radius-sm);
+  background: #f8d7da;
+  color: #721c24;
+}
+
+/* ---------- Pages anomalies ---------- */
+.fournisseur-table-card { padding: 0; overflow: hidden; }
+.fournisseur-table-card .clients-table-scroll { overflow-x: auto; }
+.anomalie-detail-link { color: var(--green-700); font-weight: 600; text-decoration: none; }
+.anomalie-detail-link:hover { text-decoration: underline; }
+.anomalie-detail-card h2,
+.anomalie-action-card h2 { margin: 0 0 18px; font-size: 18px; }
+.anomalie-detail-card > p { margin: 8px 0; color: #4b5a53; }
+.anomalie-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 22px 0; }
+.anomalie-photos h3 { margin-bottom: 10px; font-size: 14px; }
+.anomalie-photos img { display: block; max-width: 100%; max-height: 300px; border-radius: var(--radius-sm); object-fit: contain; }
+.anomalie-table-scroll { overflow-x: auto; margin: 18px -24px -24px; }
+.anomalie-form { display: grid; grid-template-columns: 1fr; gap: 10px; max-width: 480px; }
+.anomalie-form label { font-size: 13px; font-weight: 600; }
+.anomalie-form input { min-height: 42px; padding: 9px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font: 400 14px var(--font); }
+.anomalie-form .btn { justify-self: start; margin-top: 8px; }
+.anomalie-action-card > p { margin-bottom: 14px; }
+
 /* ---------- Accessibilité ---------- */
 :focus-visible { outline: 2px solid var(--green-700); outline-offset: 2px; }
 
@@ -386,6 +481,11 @@ body {
 @media (max-width: 600px) {
   .clients-search { align-items: stretch; flex-direction: column; }
   .clients-search .btn { justify-content: center; }
+  .formulaire-client { grid-template-columns: 1fr; }
+  .actions-formulaire-client { grid-column: auto; flex-wrap: wrap; }
+  .formulaire-client-carte { padding: 20px; }
+  .anomalie-photos { grid-template-columns: 1fr; }
+  .anomalie-table-scroll { margin: 18px -18px -18px; }
 }
 
 /* ---------- RTL (arabe, commun) ---------- */

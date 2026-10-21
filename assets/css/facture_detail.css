@@ -1,4 +1,3 @@
-/* Page "Détail d'une facture" (Membre 5) - feuille de facture imprimable A4 */
 :root {
     --vert: #146446;
     --vert-fonce: #0e4a34;
@@ -17,6 +16,7 @@ svg.ico { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-wi
 /* ----- Barre du haut ----- */
 .barre { height: 56px; background: var(--vert); color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
 .barre-nom { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; }
+.barre-nom--amanor { color: #e8d39a; font-family: Georgia, 'Times New Roman', serif; font-size: 24px; font-style: italic; letter-spacing: .03em; }
 .barre-droite { display: flex; align-items: center; gap: 16px; font-size: 13px; }
 .btn-deco { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border: 1px solid rgba(255,255,255,.55); border-radius: 8px; color: #fff; font-size: 13px; }
 .btn-deco:hover { background: rgba(255,255,255,.12); }
@@ -51,6 +51,7 @@ svg.ico { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-wi
 .marque-logo { width: 60px; height: 60px; border-radius: 50%; background: #eef6f1; border: 1px solid #cfe3d8; color: var(--vert-fonce); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .marque-logo svg.ico { width: 28px; height: 28px; }
 .marque-nom { font-size: 17px; font-weight: 700; color: var(--vert-fonce); }
+.marque-nom--amanor { color: var(--vert-fonce); font-family: Georgia, 'Times New Roman', serif; font-size: 24px; font-style: italic; letter-spacing: .03em; }
 .marque-sous { font-size: 12.5px; color: var(--gris); margin-top: 2px; }
 .f-droite { width: 330px; flex-shrink: 0; }
 .f-titre-ligne { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
