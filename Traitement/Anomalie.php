@@ -1,6 +1,5 @@
-
 <?php
-// Détection et traitement des anomalies de consommation.
+// Détection et traitement des anomalies de consommation (RG21, RG22, RG23).
 
 require_once ROOT . 'BD/Anomalie.php';
 require_once ROOT . 'BD/Parametre.php';
@@ -8,8 +7,8 @@ require_once ROOT . 'Traitement/Auth.php';
 require_once ROOT . 'Traitement/Facturation.php';
 
 /*
- * Ne pas redéclarer TYPES_ANOMALIE :
- * cette constante existe déjà dans BD/Anomalie.php.
+ * Ne pas redéclarer TYPES_ANOMALIE / STATUTS_ANOMALIE :
+ * ces constantes existent déjà dans BD/Anomalie.php.
  */
 const TYPES_ANOMALIE_LIBELLES = [
     'INDEX_INFERIEUR_EAU'  => "Index d'eau inférieur au précédent",
@@ -29,7 +28,6 @@ const STATUTS_ANOMALIE_LIBELLES = [
 
 /* ============================================================
    Fonctions auxiliaires du traitement
-   Elles remplacent les appels bd_anomalie_* inexistants.
    ============================================================ */
 
 /**
@@ -39,37 +37,24 @@ function traitement_anomalie_conso($idConso)
 {
     $link = Connexion();
 
-    $stmt = mysqli_prepare(
-        $link,
-        "SELECT *
-         FROM consommations
-         WHERE id_conso = ?"
-    );
-
+    $stmt = mysqli_prepare($link, "SELECT * FROM consommations WHERE id_conso = ?");
     if (!$stmt) {
         return null;
     }
 
     mysqli_stmt_bind_param($stmt, "i", $idConso);
     mysqli_stmt_execute($stmt);
-
-    $resultat = mysqli_stmt_get_result($stmt);
-    $conso = mysqli_fetch_assoc($resultat);
-
+    $conso = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
     mysqli_stmt_close($stmt);
 
     return $conso ?: null;
 }
 
 /**
- * Calculer la moyenne des consommations antérieures valides.
+ * Moyenne des 3 dernières consommations valides antérieures au mois donné.
  */
-function traitement_anomalie_moyenne(
-    $idClient,
-    $annee,
-    $mois,
-    $fluide
-) {
+function traitement_anomalie_moyenne($idClient, $annee, $mois, $fluide)
+{
     if (!in_array($fluide, ['eau', 'elec'], true)) {
         return 0.0;
     }
@@ -85,39 +70,45 @@ function traitement_anomalie_moyenne(
              FROM consommations
              WHERE id_client = ?
                AND statut IN ('VALIDE', 'REGULARISEE')
-               AND (
-                    annee < ?
-                    OR (annee = ? AND mois < ?)
-               )
+               AND (annee < ? OR (annee = ? AND mois < ?))
              ORDER BY annee DESC, mois DESC
              LIMIT 3
          ) AS historique"
     );
-
     if (!$stmt) {
         return 0.0;
     }
 
-    mysqli_stmt_bind_param(
-        $stmt,
-        "iiii",
-        $idClient,
-        $annee,
-        $annee,
-        $mois
-    );
-
+    mysqli_stmt_bind_param($stmt, "iiii", $idClient, $annee, $annee, $mois);
     mysqli_stmt_execute($stmt);
-    $resultat = mysqli_stmt_get_result($stmt);
-    $ligne = mysqli_fetch_assoc($resultat);
-
+    $ligne = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
     mysqli_stmt_close($stmt);
 
     return (float) ($ligne['moyenne'] ?? 0);
 }
 
 /**
- * Vérifier si une anomalie du même type est déjà en attente.
+ * Seuil effectif d'un fluide : le plus bas entre le seuil fixe (paramètre)
+ * et coef × moyenne des 3 derniers mois (si un historique existe).
+ */
+function traitement_anomalie_seuil($idClient, $annee, $mois, $fluide)
+{
+    $param  = $fluide === 'eau' ? 'SEUIL_MAX_EAU_MENSUEL' : 'SEUIL_MAX_ELEC_MENSUEL';
+    $defaut = $fluide === 'eau' ? 100 : 2000;
+
+    $seuil = (float) lireParametre($param, $defaut);
+    $coef  = (float) lireParametre('COEF_SEUIL_MOYENNE', 2.5);
+    $moyenne = traitement_anomalie_moyenne($idClient, $annee, $mois, $fluide);
+
+    if ($moyenne > 0) {
+        $seuil = min($seuil, round($coef * $moyenne));
+    }
+
+    return $seuil;
+}
+
+/**
+ * Une anomalie du même type est-elle déjà en attente pour cette consommation ?
  */
 function traitement_anomalie_existe($idConso, $type)
 {
@@ -125,24 +116,17 @@ function traitement_anomalie_existe($idConso, $type)
 
     $stmt = mysqli_prepare(
         $link,
-        "SELECT id_anomalie
-         FROM anomalies
-         WHERE id_conso = ?
-           AND type_anomalie = ?
-           AND statut = 'EN_ATTENTE'
+        "SELECT id_anomalie FROM anomalies
+         WHERE id_conso = ? AND type_anomalie = ? AND statut = 'EN_ATTENTE'
          LIMIT 1"
     );
-
     if (!$stmt) {
         return true;
     }
 
     mysqli_stmt_bind_param($stmt, "is", $idConso, $type);
     mysqli_stmt_execute($stmt);
-
-    $resultat = mysqli_stmt_get_result($stmt);
-    $existe = mysqli_num_rows($resultat) > 0;
-
+    $existe = mysqli_num_rows(mysqli_stmt_get_result($stmt)) > 0;
     mysqli_stmt_close($stmt);
 
     return $existe;
@@ -155,57 +139,54 @@ function traitement_anomalie_statut_conso($idConso, $statut)
 {
     $link = Connexion();
 
-    $stmt = mysqli_prepare(
-        $link,
-        "UPDATE consommations
-         SET statut = ?
-         WHERE id_conso = ?"
-    );
-
+    $stmt = mysqli_prepare($link, "UPDATE consommations SET statut = ? WHERE id_conso = ?");
     if (!$stmt) {
         return false;
     }
 
     mysqli_stmt_bind_param($stmt, "si", $statut, $idConso);
     $ok = mysqli_stmt_execute($stmt);
-
     mysqli_stmt_close($stmt);
 
     return $ok;
 }
 
 /**
- * Obtenir les types d'anomalies en attente pour une consommation.
+ * Anomalies encore en attente pour une consommation (type + description).
  */
-function traitement_anomalie_types_ouverts($idConso)
+function traitement_anomalie_ouvertes($idConso)
 {
     $link = Connexion();
 
     $stmt = mysqli_prepare(
         $link,
-        "SELECT type_anomalie
-         FROM anomalies
-         WHERE id_conso = ?
-           AND statut = 'EN_ATTENTE'"
+        "SELECT type_anomalie, description FROM anomalies
+         WHERE id_conso = ? AND statut = 'EN_ATTENTE'
+         ORDER BY id_anomalie"
     );
-
     if (!$stmt) {
         return [];
     }
 
     mysqli_stmt_bind_param($stmt, "i", $idConso);
     mysqli_stmt_execute($stmt);
-
     $resultat = mysqli_stmt_get_result($stmt);
-    $types = [];
 
+    $lignes = [];
     while ($ligne = mysqli_fetch_assoc($resultat)) {
-        $types[] = $ligne['type_anomalie'];
+        $lignes[] = $ligne;
     }
-
     mysqli_stmt_close($stmt);
 
-    return $types;
+    return $lignes;
+}
+
+/**
+ * Types d'anomalies en attente pour une consommation.
+ */
+function traitement_anomalie_types_ouverts($idConso)
+{
+    return array_column(traitement_anomalie_ouvertes($idConso), 'type_anomalie');
 }
 
 /**
@@ -214,16 +195,37 @@ function traitement_anomalie_types_ouverts($idConso)
 function traitement_anomalie_trouver($id)
 {
     $resultat = trouverAnomalieParId($id);
-
     if (!$resultat) {
         return null;
     }
 
     $ligne = mysqli_fetch_assoc($resultat);
-
     mysqli_free_result($resultat);
 
     return $ligne ?: null;
+}
+
+/**
+ * Envoyer une notification au compte utilisateur d'un client.
+ */
+function traitement_anomalie_notifier($idClient, $titre, $message, $type)
+{
+    $link = Connexion();
+
+    $stmt = mysqli_prepare(
+        $link,
+        "INSERT INTO notifications (id_utilisateur, titre, message, type)
+         SELECT id_utilisateur, ?, ?, ? FROM clients WHERE id_client = ?"
+    );
+    if (!$stmt) {
+        return false;
+    }
+
+    mysqli_stmt_bind_param($stmt, "sssi", $titre, $message, $type, $idClient);
+    $ok = mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
+
+    return $ok;
 }
 
 /* ============================================================
@@ -235,62 +237,50 @@ function detecterAnomalies($c)
     $fluides = [
         'eau' => [
             'unite' => 'm³',
-            'param' => 'SEUIL_MAX_EAU_MENSUEL',
-            'defaut' => 100,
-            'nom' => 'eau',
-            'inf' => 'INDEX_INFERIEUR_EAU',
-            'sup' => 'SEUIL_DEPASSE_EAU',
+            'nom'   => 'eau',
+            'inf'   => 'INDEX_INFERIEUR_EAU',
+            'sup'   => 'SEUIL_DEPASSE_EAU',
         ],
         'elec' => [
             'unite' => 'kWh',
-            'param' => 'SEUIL_MAX_ELEC_MENSUEL',
-            'defaut' => 2000,
-            'nom' => 'électricité',
-            'inf' => 'INDEX_INFERIEUR_ELEC',
-            'sup' => 'SEUIL_DEPASSE_ELEC',
+            'nom'   => 'électricité',
+            'inf'   => 'INDEX_INFERIEUR_ELEC',
+            'sup'   => 'SEUIL_DEPASSE_ELEC',
         ],
     ];
 
-    $coef = (float) lireParametre('COEF_SEUIL_MOYENNE', 2.5);
     $anomalies = [];
 
     foreach ($fluides as $cle => $f) {
-        $prec = (float) ($c["index_{$cle}_precedent"] ?? 0);
-        $nouveau = (float) ($c["index_{$cle}_nouveau"] ?? 0);
-        $conso = $nouveau - $prec;
+        $prec    = (int) ($c["index_{$cle}_precedent"] ?? 0);
+        $nouveau = (int) ($c["index_{$cle}_nouveau"] ?? 0);
+        $conso   = $nouveau - $prec;
 
         if ($conso < 0) {
             $anomalies[] = [
                 'type' => $f['inf'],
                 'description' =>
                     "Index {$f['nom']} saisi ($nouveau) inférieur à l'index précédent ($prec).",
-                'valeur_saisie' => $nouveau,
+                'valeur_saisie'   => $nouveau,
                 'valeur_attendue' => $prec,
             ];
-
             continue;
         }
 
-        $seuil = (float) lireParametre($f['param'], $f['defaut']);
-
-        $moyenne = traitement_anomalie_moyenne(
+        $seuil = traitement_anomalie_seuil(
             (int) $c['id_client'],
             (int) $c['annee'],
             (int) $c['mois'],
             $cle
         );
 
-        if ($moyenne > 0) {
-            $seuil = min($seuil, round($coef * $moyenne));
-        }
-
         if ($conso > $seuil) {
             $anomalies[] = [
                 'type' => $f['sup'],
                 'description' =>
                     "Consommation {$f['nom']} de $conso {$f['unite']} supérieure au seuil de $seuil {$f['unite']}.",
-                'valeur_saisie' => $conso,
-                'valeur_attendue' => $seuil,
+                'valeur_saisie'   => $conso,
+                'valeur_attendue' => (int) $seuil,
             ];
         }
     }
@@ -299,18 +289,17 @@ function detecterAnomalies($c)
 }
 
 /**
- * Appelé par Traitement/Consommation.php.
+ * Appelé par Traitement/Consommation.php après chaque enregistrement.
+ * Retourne true si au moins une anomalie existe (la saisie est alors bloquée).
  */
 function signalerAnomalie($idConso)
 {
     $c = traitement_anomalie_conso($idConso);
-
     if (!$c) {
         return false;
     }
 
     $anomalies = detecterAnomalies($c);
-
     if (!$anomalies) {
         return false;
     }
@@ -324,19 +313,24 @@ function signalerAnomalie($idConso)
                 $a['valeur_saisie'],
                 $a['valeur_attendue']
             );
-
             if (!$ok) {
                 return false;
             }
         }
     }
 
-    if (!traitement_anomalie_statut_conso(
-        $idConso,
-        'EN_ATTENTE_CORRECTION'
-    )) {
+    if (!traitement_anomalie_statut_conso($idConso, 'EN_ATTENTE_CORRECTION')) {
         return false;
     }
+
+    // RG22 : informer le client que sa saisie est en cours de vérification
+    traitement_anomalie_notifier(
+        (int) $c['id_client'],
+        "Anomalie détectée sur votre saisie",
+        "Votre relevé {$c['mois']}/{$c['annee']} présente une anomalie. "
+        . "Il est en cours de vérification par le fournisseur.",
+        'ANOMALIE_DETECTEE'
+    );
 
     return true;
 }
@@ -345,10 +339,43 @@ function signalerAnomalie($idConso)
    Pages fournisseur
    ============================================================ */
 
+/**
+ * Échappement HTML utilisé par les vues d'anomalies.
+ */
+function anomalie_e($valeur)
+{
+    return htmlspecialchars((string) $valeur, ENT_QUOTES, 'UTF-8');
+}
+
 function anomalie_retour($url, $message, $cle = 'erreur')
 {
     $_SESSION[$cle] = $message;
     rediriger($url);
+}
+
+function anomalie_commentaire()
+{
+    return mb_substr(trim($_POST['commentaire'] ?? ''), 0, 1000);
+}
+
+/**
+ * Génère la facture puis notifie le client. Retourne true si une facture a été créée.
+ */
+function anomalie_facturer($idConso, $idClient)
+{
+    $idFacture = genererFacture($idConso);
+
+    if ($idFacture) {
+        traitement_anomalie_notifier(
+            $idClient,
+            "Facture disponible",
+            "Votre saisie a été vérifiée et votre facture est disponible.",
+            'FACTURE_DISPONIBLE'
+        );
+        return true;
+    }
+
+    return false;
 }
 
 function Anomalie_index($param = null)
@@ -356,11 +383,7 @@ function Anomalie_index($param = null)
     exiger_role('FOURNISSEUR');
 
     $statut = $_GET['statut'] ?? '';
-
-    if (
-        $statut !== ''
-        && !array_key_exists($statut, STATUTS_ANOMALIE_LIBELLES)
-    ) {
+    if ($statut !== '' && !array_key_exists($statut, STATUTS_ANOMALIE_LIBELLES)) {
         $statut = '';
     }
 
@@ -386,12 +409,15 @@ function Anomalie_detail($param = null)
     $erreur = $_SESSION['erreur'] ?? '';
     unset($_SESSION['erreur']);
 
-    $seuilEau = (int) lireParametre('SEUIL_MAX_EAU_MENSUEL', 100);
-    $seuilElec = (int) lireParametre('SEUIL_MAX_ELEC_MENSUEL', 2000);
+    // Seuils effectifs réellement appliqués à cette saisie
+    $seuilEau  = traitement_anomalie_seuil((int) $a['id_client'], (int) $a['annee'], (int) $a['mois'], 'eau');
+    $seuilElec = traitement_anomalie_seuil((int) $a['id_client'], (int) $a['annee'], (int) $a['mois'], 'elec');
 
-    $typesOuverts = traitement_anomalie_types_ouverts($a['id_conso']);
+    $anomaliesOuvertes = traitement_anomalie_ouvertes((int) $a['id_conso']);
+    $typesOuverts = array_column($anomaliesOuvertes, 'type_anomalie');
+
+    // On ne peut valider telle quelle que des dépassements de seuil
     $peutValider = $a['statut'] === 'EN_ATTENTE' && count($typesOuverts) > 0;
-
     foreach ($typesOuverts as $type) {
         if (strpos($type, 'SEUIL_DEPASSE') !== 0) {
             $peutValider = false;
@@ -403,10 +429,7 @@ function Anomalie_detail($param = null)
 }
 
 /**
- * Corriger les index.
- *
- * Les champs rectifiés utilisés ici sont ceux sélectionnés
- * dans trouverAnomalieParId() de BD/Anomalie.php.
+ * Corriger les index (POST depuis IHM/fournisseur/anomalie_detail.php).
  */
 function Anomalie_corriger($param = null)
 {
@@ -424,24 +447,25 @@ function Anomalie_corriger($param = null)
         anomalie_retour($retour, "Cette anomalie a déjà été traitée.");
     }
 
-    if (
-        !ctype_digit($_POST['index_eau'] ?? '')
-        || !ctype_digit($_POST['index_elec'] ?? '')
-    ) {
+    if (!ctype_digit($_POST['index_eau'] ?? '') || !ctype_digit($_POST['index_elec'] ?? '')) {
         anomalie_retour($retour, "Les index doivent être des nombres entiers positifs.");
     }
 
-    $indexEau = (int) $_POST['index_eau'];
+    $indexEau  = (int) $_POST['index_eau'];
     $indexElec = (int) $_POST['index_elec'];
-    $precEau = (int) $a['index_eau_precedent'];
-    $precElec = (int) $a['index_elec_precedent'];
+    $precEau   = (int) $a['index_eau_precedent'];
+    $precElec  = (int) $a['index_elec_precedent'];
 
     if ($indexEau < $precEau || $indexElec < $precElec) {
-        anomalie_retour(
-            $retour,
-            "Un index corrigé ne peut pas être inférieur à l'index précédent."
-        );
+        anomalie_retour($retour, "Un index corrigé ne peut pas être inférieur à l'index précédent.");
     }
+
+    $consoEau   = $indexEau - $precEau;
+    $consoElec  = $indexElec - $precElec;
+    $idConso    = (int) $a['id_conso'];
+    $idClient   = (int) $a['id_client'];
+    $traitePar  = (int) $_SESSION['id_utilisateur'];
+    $commentaire = anomalie_commentaire();
 
     $link = Connexion();
     mysqli_begin_transaction($link);
@@ -450,37 +474,19 @@ function Anomalie_corriger($param = null)
         $stmt = mysqli_prepare(
             $link,
             "UPDATE consommations
-             SET index_eau_nouveau = ?,
-                 conso_eau = ?,
-                 index_elec_nouveau = ?,
-                 conso_elec = ?,
-                 statut = 'VALIDE',
-                 type_saisie = 'CORRIGEE'
+             SET index_eau_nouveau = ?, conso_eau = ?,
+                 index_elec_nouveau = ?, conso_elec = ?,
+                 statut = 'VALIDE', type_saisie = 'CORRIGEE'
              WHERE id_conso = ?"
         );
-
         if (!$stmt) {
             throw new Exception("Préparation de la correction impossible.");
         }
 
-        $consoEau = $indexEau - $precEau;
-        $consoElec = $indexElec - $precElec;
-        $idConso = (int) $a['id_conso'];
-
-        mysqli_stmt_bind_param(
-            $stmt,
-            "iiiii",
-            $indexEau,
-            $consoEau,
-            $indexElec,
-            $consoElec,
-            $idConso
-        );
-
+        mysqli_stmt_bind_param($stmt, "iiiii", $indexEau, $consoEau, $indexElec, $consoElec, $idConso);
         if (!mysqli_stmt_execute($stmt)) {
             throw new Exception("Échec de la correction des index.");
         }
-
         mysqli_stmt_close($stmt);
 
         $stmt = mysqli_prepare(
@@ -488,33 +494,27 @@ function Anomalie_corriger($param = null)
             "UPDATE anomalies
              SET statut = 'CORRIGEE',
                  date_traitement = NOW(),
-                 index_eau_rectifie = ?,
-                 conso_eau_rectifiee = ?,
-                 index_elec_rectifie = ?,
-                 conso_elec_rectifiee = ?
-             WHERE id_conso = ?
-               AND statut = 'EN_ATTENTE'"
+                 traite_par = ?,
+                 commentaire_resolution = ?,
+                 index_eau_rectifie = ?, conso_eau_rectifiee = ?,
+                 index_elec_rectifie = ?, conso_elec_rectifiee = ?
+             WHERE id_conso = ? AND statut = 'EN_ATTENTE'"
         );
-
         if (!$stmt) {
             throw new Exception("Préparation de la mise à jour des anomalies impossible.");
         }
 
         mysqli_stmt_bind_param(
-            $stmt,
-            "iiiii",
-            $indexEau,
-            $consoEau,
-            $indexElec,
-            $consoElec,
+            $stmt, "isiiiii",
+            $traitePar, $commentaire,
+            $indexEau, $consoEau, $indexElec, $consoElec,
             $idConso
         );
-
         if (!mysqli_stmt_execute($stmt)) {
             throw new Exception("Échec de la mise à jour des anomalies.");
         }
-
         mysqli_stmt_close($stmt);
+
         mysqli_commit($link);
     } catch (Throwable $e) {
         mysqli_rollback($link);
@@ -522,10 +522,13 @@ function Anomalie_corriger($param = null)
         return;
     }
 
-    genererFacture($idConso);
+    $facture = anomalie_facturer($idConso, $idClient);
+
     anomalie_retour(
         'Anomalie/index',
-        "Anomalie corrigée, la facture a été générée.",
+        $facture
+            ? "Anomalie corrigée, la facture a été générée."
+            : "Anomalie corrigée, mais la facture n'a pas pu être générée (déjà existante ou erreur).",
         'message'
     );
 }
@@ -550,7 +553,6 @@ function Anomalie_valider($param = null)
     }
 
     $types = traitement_anomalie_types_ouverts($a['id_conso']);
-
     if (!$types) {
         anomalie_retour($retour, "Aucune anomalie en attente à valider.");
     }
@@ -564,51 +566,45 @@ function Anomalie_valider($param = null)
         }
     }
 
-    $idConso = (int) $a['id_conso'];
-    $link = Connexion();
+    $idConso     = (int) $a['id_conso'];
+    $idClient    = (int) $a['id_client'];
+    $traitePar   = (int) $_SESSION['id_utilisateur'];
+    $commentaire = anomalie_commentaire();
 
+    $link = Connexion();
     mysqli_begin_transaction($link);
 
     try {
-        $stmt = mysqli_prepare(
-            $link,
-            "UPDATE consommations
-             SET statut = 'VALIDE'
-             WHERE id_conso = ?"
-        );
-
+        $stmt = mysqli_prepare($link, "UPDATE consommations SET statut = 'VALIDE' WHERE id_conso = ?");
         if (!$stmt) {
             throw new Exception("Préparation de la validation impossible.");
         }
 
         mysqli_stmt_bind_param($stmt, "i", $idConso);
-
         if (!mysqli_stmt_execute($stmt)) {
             throw new Exception("Échec de la validation de la consommation.");
         }
-
         mysqli_stmt_close($stmt);
 
         $stmt = mysqli_prepare(
             $link,
             "UPDATE anomalies
              SET statut = 'VALIDEE_FORCEE',
-                 date_traitement = NOW()
-             WHERE id_conso = ?
-               AND statut = 'EN_ATTENTE'"
+                 date_traitement = NOW(),
+                 traite_par = ?,
+                 commentaire_resolution = ?
+             WHERE id_conso = ? AND statut = 'EN_ATTENTE'"
         );
-
         if (!$stmt) {
             throw new Exception("Préparation du traitement des anomalies impossible.");
         }
 
-        mysqli_stmt_bind_param($stmt, "i", $idConso);
-
+        mysqli_stmt_bind_param($stmt, "isi", $traitePar, $commentaire, $idConso);
         if (!mysqli_stmt_execute($stmt)) {
             throw new Exception("Échec du traitement des anomalies.");
         }
-
         mysqli_stmt_close($stmt);
+
         mysqli_commit($link);
     } catch (Throwable $e) {
         mysqli_rollback($link);
@@ -616,11 +612,13 @@ function Anomalie_valider($param = null)
         return;
     }
 
-    genererFacture($idConso);
+    $facture = anomalie_facturer($idConso, $idClient);
 
     anomalie_retour(
         'Anomalie/index',
-        "Saisie validée, la facture a été générée.",
+        $facture
+            ? "Saisie validée, la facture a été générée."
+            : "Saisie validée, mais la facture n'a pas pu être générée (déjà existante ou erreur).",
         'message'
     );
 }

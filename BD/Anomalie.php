@@ -1,4 +1,3 @@
-
 <?php
 
 require_once __DIR__ . "/Connexion.php";
@@ -170,6 +169,10 @@ function trouverAnomalieParId($id)
             a.statut,
             a.date_detection,
             a.date_traitement,
+            a.valeur_saisie,
+            a.valeur_attendue_ou_seuil,
+            a.commentaire_resolution,
+            a.traite_par,
             a.index_eau_rectifie,
             a.conso_eau_rectifiee,
             a.index_elec_rectifie,
@@ -182,6 +185,7 @@ function trouverAnomalieParId($id)
             c.index_elec_nouveau AS index_elec,
             c.conso_eau,
             c.conso_elec,
+            c.statut AS statut_conso,
             c.photo_compteur_eau AS photo_eau,
             c.photo_compteur_elec AS photo_elec,
             cl.id_utilisateur,
@@ -203,104 +207,4 @@ function trouverAnomalieParId($id)
     mysqli_stmt_close($sql);
 
     return $resultat;
-}
-
-/**
- * Marquer une anomalie comme corrigée.
- */
-function marquerAnomalieTraitee($id)
-{
-    $link = Connexion();
-    $id = (int) $id;
-
-    $sql = mysqli_prepare(
-        $link,
-        "UPDATE anomalies
-         SET statut = 'CORRIGEE',
-             date_traitement = NOW()
-         WHERE id_anomalie = ?
-           AND statut = 'EN_ATTENTE'"
-    );
-
-    mysqli_stmt_bind_param($sql, "i", $id);
-    $ok = mysqli_stmt_execute($sql);
-
-    mysqli_stmt_close($sql);
-
-    return $ok;
-}
-
-/**
- * Trouver les index précédents de la consommation.
- *
- * On utilise les consommations antérieures valides.
- * S'il n'existe aucun historique, on utilise les index initiaux
- * enregistrés dans la table clients.
- */
-function trouverIndexPrecedent($idClient, $mois, $annee)
-{
-    $link = Connexion();
-
-    $idClient = (int) $idClient;
-    $mois = (int) $mois;
-    $annee = (int) $annee;
-
-    $sql = mysqli_prepare(
-        $link,
-        "SELECT
-            index_eau_nouveau,
-            index_elec_nouveau
-         FROM consommations
-         WHERE id_client = ?
-           AND statut IN ('VALIDE', 'REGULARISEE')
-           AND (
-                annee < ?
-                OR (annee = ? AND mois < ?)
-           )
-         ORDER BY annee DESC, mois DESC
-         LIMIT 1"
-    );
-
-    mysqli_stmt_bind_param(
-        $sql,
-        "iiii",
-        $idClient,
-        $annee,
-        $annee,
-        $mois
-    );
-
-    mysqli_stmt_execute($sql);
-
-    $resultat = mysqli_stmt_get_result($sql);
-    $ligne = mysqli_fetch_assoc($resultat);
-
-    mysqli_stmt_close($sql);
-
-    if ($ligne) {
-        return [
-            'eau' => (float) $ligne['index_eau_nouveau'],
-            'elec' => (float) $ligne['index_elec_nouveau']
-        ];
-    }
-
-    $sql = mysqli_prepare(
-        $link,
-        "SELECT index_initial_eau, index_initial_elec
-         FROM clients
-         WHERE id_client = ?"
-    );
-
-    mysqli_stmt_bind_param($sql, "i", $idClient);
-    mysqli_stmt_execute($sql);
-
-    $resultat = mysqli_stmt_get_result($sql);
-    $ligne = mysqli_fetch_assoc($resultat);
-
-    mysqli_stmt_close($sql);
-
-    return [
-        'eau' => $ligne ? (float) $ligne['index_initial_eau'] : 0.0,
-        'elec' => $ligne ? (float) $ligne['index_initial_elec'] : 0.0
-    ];
 }

@@ -1,329 +1,175 @@
-```php
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+/** @var array  $a                 Anomalie + consommation + client (Anomalie_detail) */
+/** @var string $erreur            Message d'erreur flash */
+/** @var float  $seuilEau */
+/** @var float  $seuilElec */
+/** @var array  $anomaliesOuvertes */
+/** @var bool   $peutValider */
 
-require_once __DIR__ . "/../../BD/Anomalie.php";
-require_once __DIR__ . "/../../BD/Parametre.php";
+// Vue appelée par Anomalie_detail() : utilise $a, $erreur, $seuilEau, $seuilElec,
+// $anomaliesOuvertes et $peutValider. Aucun traitement ici : les formulaires
+// envoient vers Anomalie/corriger/ID et Anomalie/valider/ID.
+$pageCss = ['anomalies.css'];
+include ROOT . 'IHM/layouts/header.php';
 
-$id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+$enAttente = $a['statut'] === 'EN_ATTENTE';
+$statLib   = isset(STATUTS_ANOMALIE_LIBELLES[$a['statut']]) ? STATUTS_ANOMALIE_LIBELLES[$a['statut']] : $a['statut'];
+$id        = (int) $a['id_anomalie'];
 
-$res = $id > 0 ? trouverAnomalieParId($id) : false;
-$a = $res ? mysqli_fetch_assoc($res) : null;
-
-if (!$a) {
-    echo "<p>Anomalie introuvable.</p>";
-    exit;
-}
-
-$prec = trouverIndexPrecedent(
-    $a['id_client'],
-    $a['mois'],
-    $a['annee']
-);
-
-$seuilEau = (float) lireParametre('seuil_eau', 100);
-$seuilElec = (float) lireParametre('seuil_electricite', 2000);
-
-$message = '';
-$erreur = false;
-
-$indexEauPrec = (float) $prec['eau'];
-$indexElecPrec = (float) $prec['elec'];
-
-$indexEauActuel = (float) $a['index_eau'];
-$indexElecActuel = (float) $a['index_elec'];
-
-$consoEau = (float) $a['conso_eau'];
-$consoElec = (float) $a['conso_elec'];
-
-if (
-    $_SERVER['REQUEST_METHOD'] === 'POST'
-    && $a['statut'] === 'EN_ATTENTE'
-) {
-    $ie = $_POST['index_eau'] ?? '';
-    $il = $_POST['index_elec'] ?? '';
-    $commentaire = trim($_POST['commentaire'] ?? '');
-
-    $idUtilisateur = $_SESSION['id_utilisateur'] ?? null;
-
-    if (
-        !$idUtilisateur
-        || !is_numeric($idUtilisateur)
-        || (int) $idUtilisateur <= 0
-    ) {
-        $message = "Utilisateur connecté introuvable. Reconnectez-vous.";
-        $erreur = true;
-
-    } elseif (
-        !is_numeric($ie)
-        || !is_numeric($il)
-        || !is_finite((float) $ie)
-        || !is_finite((float) $il)
-    ) {
-        $message = "Les index doivent être numériques et valides.";
-        $erreur = true;
-
-    } elseif (
-        (float) $ie < $indexEauPrec
-        || (float) $il < $indexElecPrec
-    ) {
-        $message = "Les index corrigés ne peuvent pas être inférieurs aux index précédents.";
-        $erreur = true;
-
-    } else {
-        $ie = (float) $ie;
-        $il = (float) $il;
-
-        $nouvelleConsoEau = $ie - $indexEauPrec;
-        $nouvelleConsoElec = $il - $indexElecPrec;
-
-        $conn = Connexion();
-
-        mysqli_begin_transaction($conn);
-
-        try {
-            // Mettre à jour uniquement si l'anomalie est encore en attente.
-            $sql = mysqli_prepare(
-                $conn,
-                "UPDATE consommations
-                 SET index_eau_precedent = ?,
-                     index_eau_nouveau = ?,
-                     conso_eau = ?,
-                     index_elec_precedent = ?,
-                     index_elec_nouveau = ?,
-                     conso_elec = ?,
-                     statut = 'VALIDE',
-                     type_saisie = 'CORRIGEE'
-                 WHERE id_conso = ?
-                   AND EXISTS (
-                       SELECT 1
-                       FROM anomalies
-                       WHERE anomalies.id_conso = consommations.id_conso
-                         AND anomalies.id_anomalie = ?
-                         AND anomalies.statut = 'EN_ATTENTE'
-                   )"
-            );
-
-            if (!$sql) {
-                throw new Exception("Préparation de la mise à jour impossible.");
-            }
-
-            mysqli_stmt_bind_param(
-                $sql,
-                "ddddddii",
-                $indexEauPrec,
-                $ie,
-                $nouvelleConsoEau,
-                $indexElecPrec,
-                $il,
-                $nouvelleConsoElec,
-                $a['id_conso'],
-                $id
-            );
-
-            if (!mysqli_stmt_execute($sql)) {
-                throw new Exception("Erreur lors de la mise à jour de la consommation.");
-            }
-
-            $nbModifiees = mysqli_stmt_affected_rows($sql);
-            mysqli_stmt_close($sql);
-
-            if ($nbModifiees !== 1) {
-                throw new Exception(
-                    "La consommation n'a pas été modifiée. Vérifiez le statut de l'anomalie."
-                );
-            }
-
-            $sql = mysqli_prepare(
-                $conn,
-                "UPDATE anomalies
-                 SET statut = 'CORRIGEE',
-                     index_eau_rectifie = ?,
-                     conso_eau_rectifiee = ?,
-                     index_elec_rectifie = ?,
-                     conso_elec_rectifiee = ?,
-                     date_traitement = NOW(),
-                     commentaire_traitement = ?,
-                     id_utilisateur_traitement = ?
-                 WHERE id_anomalie = ?
-                   AND statut = 'EN_ATTENTE'"
-            );
-
-            if (!$sql) {
-                throw new Exception("Préparation de la correction de l'anomalie impossible.");
-            }
-
-            mysqli_stmt_bind_param(
-                $sql,
-                "ddddsii",
-                $ie,
-                $nouvelleConsoEau,
-                $il,
-                $nouvelleConsoElec,
-                $commentaire,
-                $idUtilisateur,
-                $id
-            );
-
-            if (!mysqli_stmt_execute($sql)) {
-                throw new Exception("Erreur lors de la mise à jour de l'anomalie.");
-            }
-
-            $nbAnomalies = mysqli_stmt_affected_rows($sql);
-            mysqli_stmt_close($sql);
-
-            if ($nbAnomalies !== 1) {
-                throw new Exception("L'anomalie n'a pas été mise à jour.");
-            }
-
-            mysqli_commit($conn);
-
-            header("Location: anomalies.php");
-            exit;
-
-        } catch (Throwable $e) {
-            mysqli_rollback($conn);
-            $message = $e->getMessage();
-            $erreur = true;
-        }
-    }
-}
+$precEau  = (int) $a['index_eau_precedent'];
+$precElec = (int) $a['index_elec_precedent'];
 ?>
 
 <h2>
-    Anomalie :
-    <?= htmlspecialchars($a['prenom'] . ' ' . $a['nom'], ENT_QUOTES, 'UTF-8') ?>
-    (<?= htmlspecialchars($a['numero_client'], ENT_QUOTES, 'UTF-8') ?>)
+    Anomalie : <?= anomalie_e($a['prenom'] . ' ' . $a['nom']) ?>
+    (<?= anomalie_e($a['numero_client']) ?>)
 </h2>
 
-<p>
-    Type :
-    <?= htmlspecialchars($a['type'], ENT_QUOTES, 'UTF-8') ?>
-    — Période :
-    <?= (int) $a['mois'] ?>/<?= (int) $a['annee'] ?>
+<p class="anomalie-periode">
+    Période : <strong><?= (int) $a['mois'] ?>/<?= (int) $a['annee'] ?></strong>
+    — Statut : <span class="badge badge-<?= anomalie_e($a['statut']) ?>"><?= anomalie_e($statLib) ?></span>
 </p>
 
-<p>
-    Statut :
-    <?= htmlspecialchars($a['statut'], ENT_QUOTES, 'UTF-8') ?>
-</p>
-
-<?php if ($message !== ''): ?>
-    <p>
-        <strong>
-            <?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?>
-        </strong>
-    </p>
+<?php if ($erreur !== ''): ?>
+    <div class="alerte-erreur"><?= anomalie_e($erreur) ?></div>
 <?php endif; ?>
 
-<table>
-    <thead>
-        <tr>
-            <th></th>
-            <th>Eau (m³)</th>
-            <th>Électricité (kWh)</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>Photo du compteur</td>
-            <td>
-                <?php if (!empty($a['photo_eau'])): ?>
-                    <img
-                        src="../../uploads/<?= htmlspecialchars(basename($a['photo_eau']), ENT_QUOTES, 'UTF-8') ?>"
-                        alt="Compteur d'eau"
-                        width="250"
-                    >
-                <?php else: ?>
-                    Aucune photo
-                <?php endif; ?>
-            </td>
-            <td>
-                <?php if (!empty($a['photo_elec'])): ?>
-                    <img
-                        src="../../uploads/<?= htmlspecialchars(basename($a['photo_elec']), ENT_QUOTES, 'UTF-8') ?>"
-                        alt="Compteur d'électricité"
-                        width="250"
-                    >
-                <?php else: ?>
-                    Aucune photo
-                <?php endif; ?>
-            </td>
-        </tr>
-        <tr>
-            <td>Index saisi</td>
-            <td><?= htmlspecialchars((string) $indexEauActuel, ENT_QUOTES, 'UTF-8') ?></td>
-            <td><?= htmlspecialchars((string) $indexElecActuel, ENT_QUOTES, 'UTF-8') ?></td>
-        </tr>
-        <tr>
-            <td>Index précédent</td>
-            <td><?= htmlspecialchars((string) $indexEauPrec, ENT_QUOTES, 'UTF-8') ?></td>
-            <td><?= htmlspecialchars((string) $indexElecPrec, ENT_QUOTES, 'UTF-8') ?></td>
-        </tr>
-        <tr>
-            <td>Consommation calculée</td>
-            <td><?= htmlspecialchars((string) $consoEau, ENT_QUOTES, 'UTF-8') ?></td>
-            <td><?= htmlspecialchars((string) $consoElec, ENT_QUOTES, 'UTF-8') ?></td>
-        </tr>
-        <tr>
-            <td>Seuil</td>
-            <td><?= htmlspecialchars((string) $seuilEau, ENT_QUOTES, 'UTF-8') ?></td>
-            <td><?= htmlspecialchars((string) $seuilElec, ENT_QUOTES, 'UTF-8') ?></td>
-        </tr>
-    </tbody>
-</table>
+<div class="conteneur-table bloc">
+    <h3>Anomalie(s) détectée(s)</h3>
+    <ul>
+        <?php if ($enAttente && $anomaliesOuvertes): ?>
+            <?php foreach ($anomaliesOuvertes as $o): ?>
+                <li>
+                    <strong><?= anomalie_e(isset(TYPES_ANOMALIE_LIBELLES[$o['type_anomalie']]) ? TYPES_ANOMALIE_LIBELLES[$o['type_anomalie']] : $o['type_anomalie']) ?></strong>
+                    — <?= anomalie_e($o['description']) ?>
+                </li>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <li>
+                <strong><?= anomalie_e(isset(TYPES_ANOMALIE_LIBELLES[$a['type']]) ? TYPES_ANOMALIE_LIBELLES[$a['type']] : $a['type']) ?></strong>
+                — <?= anomalie_e($a['description']) ?>
+            </li>
+        <?php endif; ?>
+    </ul>
+</div>
 
-<?php if ($a['statut'] === 'EN_ATTENTE'): ?>
+<div class="conteneur-table bloc">
+    <table class="table-clients">
+        <thead>
+            <tr>
+                <th></th>
+                <th>Eau (m³)</th>
+                <th>Électricité (kWh)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Photo du compteur</td>
+                <td>
+                    <?php if (!empty($a['photo_eau'])): ?>
+                        <img src="<?= BASE_URL . anomalie_e($a['photo_eau']) ?>" alt="Compteur d'eau" class="photo-compteur">
+                    <?php else: ?>Aucune photo<?php endif; ?>
+                </td>
+                <td>
+                    <?php if (!empty($a['photo_elec'])): ?>
+                        <img src="<?= BASE_URL . anomalie_e($a['photo_elec']) ?>" alt="Compteur d'électricité" class="photo-compteur">
+                    <?php else: ?>Aucune photo<?php endif; ?>
+                </td>
+            </tr>
+            <tr>
+                <td>Index précédent</td>
+                <td><?= $precEau ?></td>
+                <td><?= $precElec ?></td>
+            </tr>
+            <tr>
+                <td>Index saisi par le client</td>
+                <td><?= anomalie_e($a['index_eau']) ?></td>
+                <td><?= anomalie_e($a['index_elec']) ?></td>
+            </tr>
+            <tr>
+                <td>Consommation calculée</td>
+                <td><?= anomalie_e($a['conso_eau']) ?></td>
+                <td><?= anomalie_e($a['conso_elec']) ?></td>
+            </tr>
+            <tr>
+                <td>Seuil appliqué</td>
+                <td><?= anomalie_e($seuilEau) ?></td>
+                <td><?= anomalie_e($seuilElec) ?></td>
+            </tr>
+            <?php if (!$enAttente && $a['index_eau_rectifie'] !== null): ?>
+            <tr>
+                <td>Index rectifié</td>
+                <td><?= anomalie_e($a['index_eau_rectifie']) ?></td>
+                <td><?= anomalie_e($a['index_elec_rectifie']) ?></td>
+            </tr>
+            <?php endif; ?>
+        </tbody>
+    </table>
+</div>
 
-    <h3>Correction d'après les photos</h3>
+<?php if ($enAttente): ?>
 
-    <form method="post">
-        <label>
-            Index eau corrigé
-            <input
-                type="number"
-                step="0.01"
-                min="<?= htmlspecialchars((string) $indexEauPrec, ENT_QUOTES, 'UTF-8') ?>"
-                name="index_eau"
-                value="<?= htmlspecialchars((string) $indexEauActuel, ENT_QUOTES, 'UTF-8') ?>"
-                required
-            >
-        </label>
+    <div class="conteneur-table bloc">
+        <h3>Corriger les index d'après les photos</h3>
 
-        <br>
+        <form method="post" action="<?= BASE_URL ?>Anomalie/corriger/<?= $id ?>">
+            <div class="groupe-champ">
+                <label>Index eau corrigé
+                    <input type="number" step="1" min="<?= $precEau ?>" name="index_eau"
+                           value="<?= anomalie_e(max($precEau, (int) $a['index_eau'])) ?>" required>
+                </label>
+            </div>
+            <div class="groupe-champ">
+                <label>Index électricité corrigé
+                    <input type="number" step="1" min="<?= $precElec ?>" name="index_elec"
+                           value="<?= anomalie_e(max($precElec, (int) $a['index_elec'])) ?>" required>
+                </label>
+            </div>
+            <div class="groupe-champ">
+                <label>Commentaire (facultatif)
+                    <textarea name="commentaire" rows="3" maxlength="1000"></textarea>
+                </label>
+            </div>
+            <button type="submit" class="btn-submit">Corriger et générer la facture</button>
+        </form>
+    </div>
 
-        <label>
-            Index électricité corrigé
-            <input
-                type="number"
-                step="0.01"
-                min="<?= htmlspecialchars((string) $indexElecPrec, ENT_QUOTES, 'UTF-8') ?>"
-                name="index_elec"
-                value="<?= htmlspecialchars((string) $indexElecActuel, ENT_QUOTES, 'UTF-8') ?>"
-                required
-            >
-        </label>
-
-        <br>
-
-        <label>
-            Commentaire
-            <textarea name="commentaire" rows="3"></textarea>
-        </label>
-
-        <br>
-
-        <button type="submit">Corriger</button>
-    </form>
+    <?php if ($peutValider): ?>
+        <div class="conteneur-table bloc">
+            <h3>Valider telle quelle</h3>
+            <p class="aide">
+                Seul un dépassement de seuil est en cause : si la consommation est confirmée
+                par les photos, vous pouvez valider la saisie sans modifier les index.
+            </p>
+            <form method="post" action="<?= BASE_URL ?>Anomalie/valider/<?= $id ?>"
+                  onsubmit="return confirm('Valider cette saisie telle quelle et générer la facture ?');">
+                <div class="groupe-champ">
+                    <label>Commentaire (facultatif)
+                        <textarea name="commentaire" rows="2" maxlength="1000"></textarea>
+                    </label>
+                </div>
+                <button type="submit" class="btn-submit btn-info">Valider telle quelle</button>
+            </form>
+        </div>
+    <?php else: ?>
+        <p class="texte-discret">
+            La validation « telle quelle » n'est pas possible : la saisie contient une erreur d'index
+            qui doit être corrigée.
+        </p>
+    <?php endif; ?>
 
 <?php else: ?>
 
-    <p>Cette anomalie n'est plus en attente de correction.</p>
+    <p class="texte-traite">
+        Cette anomalie a déjà été traitée<?php if (!empty($a['date_traitement'])): ?>
+            le <?= anomalie_e(date('d/m/Y H:i', strtotime($a['date_traitement']))) ?><?php endif; ?>.
+    </p>
+    <?php if (!empty($a['commentaire_resolution'])): ?>
+        <p class="texte-traite">Commentaire : <?= anomalie_e($a['commentaire_resolution']) ?></p>
+    <?php endif; ?>
 
 <?php endif; ?>
 
-<p>
-    <a href="anomalies.php">Retour à la liste</a>
-</p>
+<p><a href="<?= BASE_URL ?>Anomalie/index" class="btn-submit btn-gris">Retour à la liste</a></p>
+
+<?php include ROOT . 'IHM/layouts/footer.php'; ?>
