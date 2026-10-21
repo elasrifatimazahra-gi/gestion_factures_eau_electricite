@@ -5,7 +5,10 @@ $link = Connexion();
 function lister()
 {
     global $link;
-    $sql = "select * from clients";
+    $sql = "SELECT c.*, u.statut_compte,
+                   (u.bloque_jusqu_a IS NOT NULL AND u.bloque_jusqu_a > NOW()) AS est_bloque
+            FROM clients c
+            INNER JOIN utilisateurs u ON c.id_utilisateur = u.id_utilisateur";
     return mysqli_query($link,$sql);
 }
 
@@ -13,7 +16,11 @@ function rechercher($terme)
 {
    global $link;
    $terme =  mysqli_real_escape_string($link,$terme);
-   $sql = "select * from clients where nom LIKE '%$terme%' or prenom LIKE '%$terme%' or cin LIKE '%$terme%'";
+   $sql = "SELECT c.*, u.statut_compte,
+                  (u.bloque_jusqu_a IS NOT NULL AND u.bloque_jusqu_a > NOW()) AS est_bloque
+           FROM clients c
+           INNER JOIN utilisateurs u ON c.id_utilisateur = u.id_utilisateur
+           WHERE c.nom LIKE '%$terme%' OR c.prenom LIKE '%$terme%' OR c.cin LIKE '%$terme%'";
    return mysqli_query($link,$sql);
 }
 
@@ -98,10 +105,24 @@ function changerMotDePasse($id_user, $nouveauPswd) {
     return mysqli_query($link, $sql);
 }
 
+function statutCompteClient($cin){
+    global $link;
+    $cin = mysqli_real_escape_string($link,$cin);
+    $sql = "SELECT u.statut_compte,
+                   (u.bloque_jusqu_a IS NOT NULL AND u.bloque_jusqu_a > NOW()) AS est_bloque
+            FROM utilisateurs u
+            INNER JOIN clients c ON c.id_utilisateur = u.id_utilisateur
+            WHERE c.cin='$cin'";
+    $res = mysqli_query($link,$sql);
+    return mysqli_fetch_assoc($res);
+}
+
 function debloquerClient($cin){
     global $link;
     $cin = mysqli_real_escape_string($link,$cin);
-    $sql = "Update utilisateurs SET statut_compte ='ACTIF' where id_utilisateur = (SELECT id_utilisateur from clients where cin='$cin')";
+    $sql = "UPDATE utilisateurs
+            SET statut_compte = 'ACTIF', tentatives_echouees = 0, bloque_jusqu_a = NULL
+            WHERE id_utilisateur = (SELECT id_utilisateur FROM clients WHERE cin='$cin')";
     return mysqli_query($link,$sql);
 }
 

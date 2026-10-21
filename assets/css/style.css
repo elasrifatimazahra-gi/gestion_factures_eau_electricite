@@ -164,3 +164,129 @@ h2 {
     color: white;
     padding-left: 30px;
 }
+
+/* --- FORMULAIRE CLIENT --- */
+.formulaire-client-page {
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+.retour-clients {
+    display: inline-block;
+    margin-bottom: 20px;
+    color: #1a5235;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.retour-clients:hover {
+    text-decoration: underline;
+}
+
+.formulaire-client-carte {
+    padding: 30px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.formulaire-client-carte h2 {
+    margin-bottom: 24px;
+}
+
+.formulaire-client {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px 20px;
+}
+
+.champ-client {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.champ-client label {
+    font-weight: 600;
+}
+
+.champ-client input {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid #d5ddd8;
+    border-radius: 8px;
+    font: inherit;
+}
+
+.champ-client input:focus {
+    border-color: #27ae60;
+    outline: 2px solid rgba(39, 174, 96, 0.15);
+}
+
+.formulaire-mdp {
+    max-width: 480px;
+}
+
+.formulaire-mdp .champ-client input {
+    margin-top: 2px;
+}
+
+.actions-formulaire-client {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    grid-column: 1 / -1;
+    margin-top: 8px;
+}
+
+.bouton-client,
+.bouton-annuler-client {
+    padding: 11px 18px;
+    border: 0;
+    border-radius: 8px;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.bouton-client {
+    background: #1a5235;
+    color: white;
+}
+
+.bouton-client:hover {
+    background: #246a46;
+}
+
+.bouton-annuler-client {
+    background: #edf1ee;
+    color: #333;
+}
+
+.erreur-client {
+    margin-bottom: 18px;
+    padding: 12px 15px;
+    border: 1px solid #f5c6cb;
+    border-radius: 8px;
+    background: #f8d7da;
+    color: #721c24;
+}
+
+@media (max-width: 600px) {
+    .main-content {
+        padding: 24px 16px;
+    }
+
+    .formulaire-client-carte {
+        padding: 22px 18px;
+    }
+
+    .formulaire-client {
+        grid-template-columns: 1fr;
+    }
+
+    .actions-formulaire-client {
+        grid-column: auto;
+        flex-wrap: wrap;
+    }
+}
