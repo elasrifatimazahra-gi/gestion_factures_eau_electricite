@@ -1,4 +1,4 @@
-```php
+
 <?php
 $titreFournisseur = 'Anomalies';
 $sousTitreFournisseur = 'Consultez et traitez les anomalies de consommation.';
