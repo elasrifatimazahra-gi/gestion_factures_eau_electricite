@@ -6,9 +6,10 @@
 require_once ROOT . 'BD/Consommation.php';
 require_once ROOT . 'BD/Utilisateur.php';
 require_once ROOT . 'BD/Facture.php';
+require_once ROOT . 'BD/Parametre.php';
+require_once ROOT . 'BD/Anomalie.php';
 require_once ROOT . 'Traitement/Auth.php';
 require_once ROOT . 'Traitement/Upload.php';
-require_once ROOT . 'Traitement/Anomalie.php';
 require_once ROOT . 'Traitement/Facturation.php';
 
 function consommation_mois_fr()
@@ -59,6 +60,29 @@ function consommation_index_precedents($idClient)
         'eau'  => (int) $initial['index_initial_eau'],
         'elec' => (int) $initial['index_initial_elec'],
     ];
+}
+
+// Détecte les anomalies de saisie (RG21)
+// Retourne la liste des types, vide si la saisie est correcte
+function consommation_detecter_anomalies($consoEau, $consoElec)
+{
+    $seuilEau  = (float) lireParametre('SEUIL_MAX_EAU_MENSUEL', 100);
+    $seuilElec = (float) lireParametre('SEUIL_MAX_ELEC_MENSUEL', 2000);
+
+    $anomalies = [];
+    if ($consoEau < 0) {
+        $anomalies[] = 'INDEX_INFERIEUR_EAU';
+    }
+    if ($consoElec < 0) {
+        $anomalies[] = 'INDEX_INFERIEUR_ELEC';
+    }
+    if ($consoEau > $seuilEau) {
+        $anomalies[] = 'SEUIL_DEPASSE_EAU';
+    }
+    if ($consoElec > $seuilElec) {
+        $anomalies[] = 'SEUIL_DEPASSE_ELEC';
+    }
+    return $anomalies;
 }
 
 // Affiche la page de déclaration
@@ -121,13 +145,16 @@ function Consommation_enregistrer($param = null)
     $eauNouv = (int) $_POST['index_eau'];
     $elecNouv = (int) $_POST['index_elec'];
 
-    // Calcul côté serveur (RG15) et anomalie de base (RG21)
+    // Calcul côté serveur (RG15)
     $prec = consommation_index_precedents($idClient);
     $eauPrec = $prec['eau'];
     $elecPrec = $prec['elec'];
     $consoEau = $eauNouv - $eauPrec;
     $consoElec = $elecNouv - $elecPrec;
-    $anomalie = ($consoEau < 0 || $consoElec < 0);
+
+    // Anomalies (RG21) : index inférieur ou seuil dépassé
+    $anomalies = consommation_detecter_anomalies($consoEau, $consoElec);
+    $estAnomalie = count($anomalies) > 0;
 
     // Photos (RG13)
     $photoEau = uploadPhoto($_FILES['photo_eau'] ?? []);
@@ -139,8 +166,8 @@ function Consommation_enregistrer($param = null)
         consommation_retour($erreurUpload);
     }
 
-    // Enregistrement
-    $statut = $anomalie ? 'EN_ATTENTE_CORRECTION' : 'VALIDE';
+    // Enregistrement de la consommation
+    $statut = $estAnomalie ? 'EN_ATTENTE_CORRECTION' : 'VALIDE';
     $id = enregistrer(
         $idClient, $annee, $mois,
         $eauPrec, $eauNouv, $consoEau, $photoEau,
@@ -151,11 +178,13 @@ function Consommation_enregistrer($param = null)
         consommation_retour("Une erreur est survenue lors de l'enregistrement.");
     }
 
+    // Enregistrement de chaque anomalie pour le fournisseur
+    foreach ($anomalies as $type) {
+        creerAnomalie($id, $type);
+    }
+
     // Suite : anomalie ou facturation (modules des autres membres)
-    if ($anomalie) {
-        if (function_exists('signalerAnomalie')) {
-            signalerAnomalie($id);
-        }
+    if ($estAnomalie) {
         consommation_retour("Votre saisie présente une anomalie et est en cours de vérification.", 'succes');
     }
     if (function_exists('genererFacture')) {
