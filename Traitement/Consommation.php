@@ -185,7 +185,7 @@ function Consommation_enregistrer($param = null)
 
     // Suite : anomalie ou facturation (modules des autres membres)
     if ($estAnomalie) {
-        consommation_retour("Votre saisie présente une anomalie et est en cours de vérification.", 'succes');
+        consommation_retour("Votre saisie présente une anomalie et est en cours de vérification.", 'erreur');
     }
     if (function_exists('genererFacture')) {
         genererFacture($id);
