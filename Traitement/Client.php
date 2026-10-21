@@ -4,8 +4,11 @@ require_once ROOT . 'Traitement/Auth.php';
     function Client_index()
     {
         exiger_role('FOURNISSEUR');
-        if (isset($_GET['recherche']) && !empty(trim($_GET['recherche']))) {
-            $terme = trim($_GET['recherche']);
+        require_once ROOT . 'BD/Tableau_bord.php';
+        $infosFournisseur = bd_tableau_infos_utilisateur($_SESSION['id_utilisateur']) ?: [];
+
+        if (isset($_GET['search']) && !empty(trim($_GET['search']))) {
+            $terme = trim($_GET['search']);
             $res_clients = rechercher($terme);
         } else {
            $res_clients = lister();
@@ -111,18 +114,24 @@ function Client_modifier($id_client = null) {
 
 function Client_debloquer($cin = NULL)
 {
-  exiger_role('FOURNISSEUR');
+    exiger_role('FOURNISSEUR');
 
-  if ($cin){
-        if (debloquerClient($cin)) {
+    if ($cin) {
+        $statut = statutCompteClient($cin);
+
+        if (!$statut) {
+            $_SESSION['msg_erreur'] = "Client introuvable.";
+        } elseif ($statut['statut_compte'] === 'ACTIF' && !$statut['est_bloque']) {
+            $_SESSION['msg_succes'] = "Le compte du client (CIN: $cin) est déjà actif.";
+        } elseif (debloquerClient($cin)) {
             $_SESSION['msg_succes'] = "Le compte du client (CIN: $cin) a été débloqué avec succès.";
         } else {
-            $_SESSION['msg_erreur'] = "Impossible de débloquer le client."; // Optionnel
+            $_SESSION['msg_erreur'] = "Impossible de débloquer le client.";
         }
     }
+
     header('Location: ' . BASE_URL . 'Client/index');
     exit;
-  
 }
 
 function Client_changerMdp($id_client = null) {

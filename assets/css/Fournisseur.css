@@ -289,6 +289,85 @@ body {
 .btn--primary { background: var(--green-900); color: #fff; }
 .btn--primary:hover { background: var(--green-800); }
 
+/* ---------- Gestion des clients ---------- */
+.clients-content { min-width: 0; }
+
+.clients-search {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.clients-search input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: 400 14px var(--font);
+}
+
+.clients-search input:focus {
+  border-color: var(--green-600);
+  outline: 2px solid rgba(47, 125, 79, .15);
+}
+
+.clients-search .btn { border-radius: 999px; }
+
+.clients-actions { margin-bottom: 18px; }
+.clients-actions .btn { background: var(--green-600); }
+.clients-actions .btn:hover { background: var(--green-700); }
+
+.clients-message {
+  margin-bottom: 18px;
+  padding: 14px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.clients-message--success {
+  border-color: #b9dfc8;
+  background: #e8f5ed;
+  color: #155724;
+}
+
+.clients-message--error {
+  border-color: #f5c6cb;
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.clients-table-card { padding: 0; overflow: hidden; }
+.clients-table-scroll { overflow-x: auto; }
+.clients-table { min-width: 1200px; }
+.clients-table th,
+.clients-table td { text-align: left; }
+.clients-table th:first-child,
+.clients-table td:first-child { text-align: left; }
+
+.clients-row-actions { min-width: 300px; }
+
+.clients-action {
+  display: inline-block;
+  margin: 2px 4px 2px 0;
+  padding: 7px 10px;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.clients-action--edit { background: #2876a8; }
+.clients-action--password { background: #b7791f; }
+.clients-action--unlock { background: var(--green-600); }
+.clients-action:hover { filter: brightness(.92); }
+.clients-empty { padding: 32px !important; text-align: center !important; color: var(--text-muted) !important; }
+
 /* ---------- Accessibilité ---------- */
 :focus-visible { outline: 2px solid var(--green-700); outline-offset: 2px; }
 
@@ -302,6 +381,11 @@ body {
   .sidebar { display: none; }           /* à remplacer par un menu burger */
   .content, .topbar { padding-left: 16px; padding-right: 16px; }
   .user { display: none; }
+}
+
+@media (max-width: 600px) {
+  .clients-search { align-items: stretch; flex-direction: column; }
+  .clients-search .btn { justify-content: center; }
 }
 
 /* ---------- RTL (arabe, commun) ---------- */

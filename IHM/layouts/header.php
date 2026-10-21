@@ -14,7 +14,7 @@ if (session_status() === PHP_SESSION_NONE) {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/style.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/style.css?v=<?= filemtime(ROOT . 'assets/css/style.css') ?>">
 </head>
 <body>
 
@@ -23,9 +23,9 @@ if (session_status() === PHP_SESSION_NONE) {
     <?php
 // On vérifie le rôle de l'utilisateur connecté pour afficher le bon menu
 if (isset($_SESSION['role'])) {
-    if ($_SESSION['role'] === 'fournisseur') {
+    if ($_SESSION['role'] === 'FOURNISSEUR') {
         include ROOT . 'IHM/layouts/sidebar_fournisseur.php';
-    } elseif ($_SESSION['role'] === 'client') {
+    } elseif ($_SESSION['role'] === 'CLIENT') {
         include ROOT . 'IHM/layouts/sidebar_client.php';
     }
 }

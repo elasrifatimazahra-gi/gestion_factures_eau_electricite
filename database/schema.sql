@@ -416,7 +416,7 @@ INSERT INTO `tarifs_tranches` (`type_fluide`, `tranche_num`, `borne_min`, `borne
 
 -- Compte Fournisseur (login / email: admin@fournisseur.ma | mot de passe: Admin1234@)
 INSERT INTO `utilisateurs` (`id_utilisateur`, `identifiant`, `email`, `mot_de_passe`, `role`, `statut_compte`) VALUES
-(1, 'admin@fournisseur.ma', 'admin@fournisseur.ma', '$2y$10$wT8B14V.c91K56jE038U1e028nN1.C4a3EaAekJ1E152P70hM1a1y', 'FOURNISSEUR', 'ACTIF');
+(1, 'admin@fournisseur.ma', 'admin@fournisseur.ma', '$2y$10$P8YaP.KbH5Rp48f8LkPuaOWihK9xgcz8/JhDpKMFhKaEXJ7S3abYm', 'FOURNISSEUR', 'ACTIF');
 
 -- Agent de tournee (RG39)
 INSERT INTO `agents` (`id_agent`, `matricule`, `nom`, `prenom`, `telephone`, `email`, `zone_affectation`, `actif`) VALUES
