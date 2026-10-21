@@ -12,7 +12,7 @@
 
 <!-- Bouton Ajouter -->
 <div style="margin-bottom: 20px;">
-    <a href="<?= BASE_URL ?>Client/add" class="btn-submit">+ Ajouter client</a>
+    <a href="<?= BASE_URL ?>Client/ajouter" class="btn-submit">+ Ajouter client</a>
 </div>
 
 <?php if(isset($_SESSION['msg_succes'])){ ?>
@@ -58,8 +58,8 @@
                     <td><?= htmlspecialchars($client['index_initial_eau']) ?></td>
                     <td><?= htmlspecialchars($client['index_initial_elec']) ?></td>
                     <td class="actions">
-                        <a href="<?= BASE_URL ?>Client/edit/<?= htmlspecialchars($client['id_client']) ?>" class="btn-edit">Modifier</a>
-                        <a href="<?= BASE_URL ?>Client/changer_mdp/<?= htmlspecialchars($client['id_client']) ?>" class="btn-mdp">Changer mot de passe</a>
+                        <a href="<?= BASE_URL ?>Client/modifier/<?= htmlspecialchars($client['id_client']) ?>" class="btn-edit">Modifier</a>
+                        <a href="<?= BASE_URL ?>Client/changerMdp/<?= htmlspecialchars($client['id_client']) ?>" class="btn-mdp">Changer mot de passe</a>
                         <a href="<?= BASE_URL ?>Client/debloquer/<?= htmlspecialchars($client['cin']) ?>" class="btn-debloquer">Débloquer</a>
                     </td>
                 </tr>

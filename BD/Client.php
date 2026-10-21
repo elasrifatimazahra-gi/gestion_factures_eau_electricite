@@ -101,7 +101,7 @@ function changerMotDePasse($id_user, $nouveauPswd) {
 function debloquerClient($cin){
     global $link;
     $cin = mysqli_real_escape_string($link,$cin);
-    $sql = "Update utilisateurs SET statut ='ACTIF' where id_utilisateur = (SELECT id_utilisateur from clients where cin='$cin')";
+    $sql = "Update utilisateurs SET statut_compte ='ACTIF' where id_utilisateur = (SELECT id_utilisateur from clients where cin='$cin')";
     return mysqli_query($link,$sql);
 }
 

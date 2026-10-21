@@ -1,7 +1,9 @@
 <?php require_once 'BD/Client.php';
 require_once 'BD/Utilisateur.php';
+require_once ROOT . 'Traitement/Auth.php';
     function Client_index()
     {
+        exiger_role('FOURNISSEUR');
         if (isset($_GET['recherche']) && !empty(trim($_GET['recherche']))) {
             $terme = trim($_GET['recherche']);
             $res_clients = rechercher($terme);
@@ -13,6 +15,8 @@ require_once 'BD/Utilisateur.php';
    
 function Client_ajouter()
 {
+    exiger_role('FOURNISSEUR');
+
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
        
         $nom = $_POST['nom'];
@@ -57,10 +61,15 @@ function Client_ajouter()
     }
     
     // Cas d'un GET ou s'il y a une erreur : afficher le formulaire d'ajout
-    require_once 'IHM/client_form.php';
+    $action_formulaire = 'Client/ajouter';
+    $bouton_formulaire = 'Ajouter le client';
+    $client_actuel = $_POST ?? [];
+    require_once ROOT . 'IHM/fournisseur/client_form.php';
 }
     
 function Client_modifier($id_client = null) {
+    exiger_role('FOURNISSEUR');
+
     if (!$id_client) {
         header('Location: ' . BASE_URL . 'Client/index');
         exit;
@@ -91,7 +100,9 @@ function Client_modifier($id_client = null) {
     // Recuperer les infos actuelles pour pre-remplir le formulaire
     $res = trouverParId($id_client);
     if ($client_actuel = mysqli_fetch_assoc($res)) {
-        require_once 'IHM/client_edit_form.php'; 
+        $action_formulaire = 'Client/modifier/' . $id_client;
+        $bouton_formulaire = 'Modifier le client';
+        require_once ROOT . 'IHM/fournisseur/client_form.php';
     } else {
         header('Location: ' . BASE_URL . 'Client/index');
         exit;
@@ -100,6 +111,8 @@ function Client_modifier($id_client = null) {
 
 function Client_debloquer($cin = NULL)
 {
+  exiger_role('FOURNISSEUR');
+
   if ($cin){
         if (debloquerClient($cin)) {
             $_SESSION['msg_succes'] = "Le compte du client (CIN: $cin) a été débloqué avec succès.";
@@ -113,6 +126,12 @@ function Client_debloquer($cin = NULL)
 }
 
 function Client_changerMdp($id_client = null) {
+    if ($id_client !== null || (isset($_SESSION['role']) && $_SESSION['role'] === 'FOURNISSEUR')) {
+        exiger_role('FOURNISSEUR');
+    } else {
+        exiger_role('CLIENT');
+    }
+
     // 1. Recuperation des infos de la personne actuellement connectee
     $id_connecte = $_SESSION['id_utilisateur'];
     $role_connecte = $_SESSION['role'] ; 
@@ -167,5 +186,5 @@ function Client_changerMdp($id_client = null) {
     }
 
     // Affichage de la vue
-    require_once 'IHM/client_mdp_form.php'; 
+    require_once ROOT . 'IHM/fournisseur/client_mdp_form.php';
 }
