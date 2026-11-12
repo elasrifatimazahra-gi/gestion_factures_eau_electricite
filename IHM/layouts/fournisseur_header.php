@@ -5,7 +5,7 @@ $infosFournisseur = bd_tableau_infos_utilisateur($_SESSION['id_utilisateur']) ?:
 $email = $infosFournisseur['email'] ?? ($infosFournisseur['identifiant'] ?? '');
 $initiales = strtoupper(substr($email !== '' ? $email : 'AD', 0, 2));
 $pageFournisseur = $_GET['url'] ?? '';
-$sectionFournisseur = strpos($pageFournisseur, 'Client/') === 0 ? 'Client' : 'Anomalie';
+$sectionFournisseur = explode('/', $pageFournisseur)[0] ?? '';
 $titreFournisseur = $titreFournisseur ?? 'Tableau de bord';
 $sousTitreFournisseur = $sousTitreFournisseur ?? '';
 
@@ -28,16 +28,18 @@ $icoFournisseur = function ($nom, $classe = '') use ($iconesFournisseur) {
 };
 
 $menuFournisseur = [
-    ['Tableau de bord', BASE_URL . 'Auth/accueil', 'tableau', ''],
+    ['Tableau de bord', BASE_URL . 'Auth/accueil', 'tableau', 'Auth'],
     ['Clients', BASE_URL . 'Client/index', 'clients', 'Client'],
+    ['Quartiers', BASE_URL . 'Quartier/index', 'calendrier', 'Quartier'],
+    ['Agents', BASE_URL . 'Agent/index', 'clients', 'Agent'],
     ['Anomalies', BASE_URL . 'Anomalie/index', 'anomalie', 'Anomalie'],
     ['Réclamations', '#', 'message', ''],
     ['Paiements', '#', 'carte', ''],
     ['Coupures', '#', 'eclair', ''],
     ['Sanctions', '#', 'bouclier', ''],
     ['Contrôle annuel', '#', 'calendrier', ''],
-    ['Paramètres', '#', 'reglages', ''],
-    ['Journal', '#', 'journal', ''],
+    ['Paramètres', BASE_URL . 'Parametre/index', 'reglages', 'Parametre'],
+    ['Journal', BASE_URL . 'Journal/index', 'journal', 'Journal'],
 ];
 ?>
 <!DOCTYPE html>
@@ -48,6 +50,7 @@ $menuFournisseur = [
     <title><?= htmlspecialchars($titreFournisseur) ?></title>
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/accueil_fournisseur.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/Fournisseur.css?v=<?= filemtime(ROOT . 'assets/css/Fournisseur.css') ?>">
+    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/Parametre.css?v=<?= filemtime(ROOT . 'assets/css/Parametre.css') ?>">
 </head>
 <body>
 <div class="app">

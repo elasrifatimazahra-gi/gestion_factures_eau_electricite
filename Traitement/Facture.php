@@ -2,6 +2,7 @@
 // Contrôleur : pages "Mes factures" (URL : Facture/liste et Facture/detail/ID)
 
 require_once ROOT . 'BD/Facture.php';
+require_once ROOT . 'BD/Notification.php';
 require_once ROOT . 'BD/Utilisateur.php';
 require_once ROOT . 'Traitement/Auth.php';
 require_once ROOT . 'Traitement/Facturation.php';
@@ -116,6 +117,7 @@ function Facture_liste($param = null)
     appliquerPenalites();                     // met à jour les retards avant l'affichage
     $factures = bd_facture_du_client($idClient);
     $client = bd_facture_infos_client($idClient);
+    $notificationsNonLues = bd_notification_compter_non_lues((int) $_SESSION['id_utilisateur']);
 
     include ROOT . 'IHM/client/factures.php';
 }

@@ -7,9 +7,9 @@ require_once ROOT . 'Traitement/Auth.php';
 
         if (isset($_GET['search']) && !empty(trim($_GET['search']))) {
             $terme = trim($_GET['search']);
-            $res_clients = rechercher($terme);
+            $res_clients = bd_client_rechercher($terme);
         } else {
-           $res_clients = lister();
+           $res_clients = bd_client_lister();
         }
         require_once 'IHM/fournisseur/clients.php';
     }
@@ -31,18 +31,18 @@ function Client_ajouter()
         $index_initial_elec = $_POST['index_initial_elec'];
         
         // 1. On verifie D'ABORD si le CIN existe deja
-        if (cinExiste($cin)) {
+        if (bd_client_cin_existe($cin)) {
             $erreur = "Ce CIN existe déjà .";
         } else {  
             // 2. S'il n'existe pas, on genere le numero client
-            $numero_client = genererNumClient();
+            $numero_client = bd_client_generer_numero();
             
             // 3. On cree le compte utilisateur
             $id_utilisateur = bd_utilisateur_creer($numero_client, $cin, 'CLIENT');
             
             if ($id_utilisateur) {
                 // 4. On cree le compte client
-                $resultat = ajouter($id_utilisateur, $numero_client, $cin, $nom, $prenom, $adresse, $telephone, $numero_compteur_eau, $numero_compteur_elec, $index_initial_eau, $index_initial_elec);
+                $resultat = bd_client_ajouter($id_utilisateur, $numero_client, $cin, $nom, $prenom, $adresse, $telephone, $numero_compteur_eau, $numero_compteur_elec, $index_initial_eau, $index_initial_elec);
         
                 if ($resultat) {
                     $_SESSION['msg_succes'] = "Client ajouté avec succès<br>
@@ -78,7 +78,7 @@ function Client_modifier($id_client = null) {
         //Sauvegarde des modifications du formulaire
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
-        if (modifier(
+        if (bd_client_modifier(
             $id_client, 
             $_POST['cin'], 
             $_POST['nom'], 
@@ -99,7 +99,7 @@ function Client_modifier($id_client = null) {
     }
     //Cas bouton modifier existant dans la liste des clients
     // Recuperer les infos actuelles pour pre-remplir le formulaire
-    $res = trouverParId($id_client);
+    $res = bd_client_trouver_par_id($id_client);
     if ($client_actuel = mysqli_fetch_assoc($res)) {
         $action_formulaire = 'Client/modifier/' . $id_client;
         $bouton_formulaire = 'Modifier le client';
@@ -115,13 +115,13 @@ function Client_debloquer($cin = NULL)
     exiger_role('FOURNISSEUR');
 
     if ($cin) {
-        $statut = statutCompteClient($cin);
+        $statut = bd_client_statut_compte($cin);
 
         if (!$statut) {
             $_SESSION['msg_erreur'] = "Client introuvable.";
         } elseif ($statut['statut_compte'] === 'ACTIF' && !$statut['est_bloque']) {
             $_SESSION['msg_succes'] = "Le compte du client (CIN: $cin) est déjà actif.";
-        } elseif (debloquerClient($cin)) {
+        } elseif (bd_client_debloquer($cin)) {
             $_SESSION['msg_succes'] = "Le compte du client (CIN: $cin) a été débloqué avec succès.";
         } else {
             $_SESSION['msg_erreur'] = "Impossible de débloquer le client.";
@@ -152,7 +152,7 @@ function Client_changerMdp($id_client = null) {
     
     if ($id_client !== null && $role_connecte === 'FOURNISSEUR') {
         // CAS 3 : Le fournisseur change le mot de passe d'un client oublie
-        $res = trouverParId($id_client);
+        $res = bd_client_trouver_par_id($id_client);
         if ($client = mysqli_fetch_assoc($res)) {
             $target_id_utilisateur = $client['id_utilisateur'];
             $titre_page = "Réinitialiser le mot de passe du client : " . $client['nom'];
@@ -180,7 +180,7 @@ function Client_changerMdp($id_client = null) {
             $mdp_hash = password_hash($nouveau_mdp, PASSWORD_DEFAULT);
             
             // Mise a jour en BD
-            if (changerMotDePasse($target_id_utilisateur, $mdp_hash)) {
+            if (bd_client_changer_mot_de_passe($target_id_utilisateur, $mdp_hash)) {
                 $_SESSION['msg_succes'] = "Le mot de passe a été modifié avec succès.";
                 header('Location: ' . $redirection_apres_succes);
                 exit;

@@ -54,7 +54,7 @@ $menu = [
     ['Mes factures',      BASE_URL . 'Facture/liste',             'facture', false],
     ['Paiement en ligne', '#',                                    'carte',   false],
     ['Mes réclamations',  '#',                                    'message', false],
-    ['Notifications',     '#',                                    'cloche',  false],
+    ['Notifications',     BASE_URL . 'Notification/liste',        'cloche',  false],
 ];
 
 /* ---------- Variation « par rapport au mois dernier » ---------- */
@@ -137,6 +137,7 @@ $conseils = [
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/factures.css?v=<?= filemtime(ROOT . 'assets/css/factures.css') ?>">
     <!-- accueil.css (Membre 1) = éléments propres à la vue d'ensemble -->
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/accueil.css?v=<?= @filemtime(ROOT . 'assets/css/accueil.css') ?>">
+    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/Parametre.css?v=<?= filemtime(ROOT . 'assets/css/Parametre.css') ?>">
 </head>
 <body>
 <div class="appli">
@@ -152,6 +153,7 @@ $conseils = [
                 <a class="nav-item<?= $actif ? ' actif' : '' ?>" href="<?= htmlspecialchars($lien) ?>">
                     <?= $ico($icone) ?>
                     <span><?= htmlspecialchars($libelle) ?></span>
+                    <?php if ($icone === 'cloche' && !empty($notificationsNonLues)): ?><span class="notification-badge"><?= (int) $notificationsNonLues ?></span><?php endif; ?>
                     <?php if ($actif): ?><?= $ico('chevron', 'chevron') ?><?php endif; ?>
                 </a>
             <?php endforeach; ?>
@@ -171,7 +173,10 @@ $conseils = [
             <div class="statut-portail"><span class="point-vert"></span> Amanor opérationnel</div>
             <div class="topbar-droite">
                 <div class="langues"><span class="actif">FR</span><span>AR</span></div>
-                <span class="cloche"><?= $ico('cloche') ?></span>
+                <a class="cloche m1-bell" href="<?= BASE_URL ?>Notification/liste" aria-label="Notifications non lues : <?= (int) ($notificationsNonLues ?? 0) ?>">
+                    <?= $ico('cloche') ?>
+                    <?php if (!empty($notificationsNonLues)): ?><span class="m1-bell-count"><?= (int) $notificationsNonLues ?></span><?php endif; ?>
+                </a>
                 <span class="separateur"></span>
                 <a class="deconnexion" href="<?= BASE_URL ?>Auth/logout"><?= $ico('sortie') ?> Déconnexion</a>
             </div>

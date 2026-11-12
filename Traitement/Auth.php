@@ -12,6 +12,21 @@ function rediriger($chemin)
     exit;
 }
 
+function csrf_token_m1()
+{
+    if (empty($_SESSION['csrf_token_m1'])) {
+        $_SESSION['csrf_token_m1'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token_m1'];
+}
+
+function csrf_valider_m1($token)
+{
+    return isset($_SESSION['csrf_token_m1'])
+        && is_string($token)
+        && hash_equals($_SESSION['csrf_token_m1'], $token);
+}
+
 function Auth_login_client($param = null)
 {
     $erreur = $_SESSION['erreur_login'] ?? null;
@@ -112,6 +127,8 @@ function Auth_accueil($param = null)
  
     // ----- Client : vue d'ensemble -----
     $d = auth_donnees_accueil_client((int) ($_SESSION['id_client'] ?? 0));
+    require_once ROOT . 'BD/Notification.php';
+    $notificationsNonLues = bd_notification_compter_non_lues((int) $_SESSION['id_utilisateur']);
     extract($d);   // crée $client, $solde, $echeance, $nbImpayees, $etatSaisie, $dernierJour, $mois,
                    // $historique, $dernierEau, $dernierElec, $variationEau, $variationElec,
                    // $estimationTtc, $dernieresFacturesClient
