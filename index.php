@@ -4,7 +4,10 @@ define('ROOT', str_replace('index.php', '', $_SERVER['SCRIPT_FILENAME']));
 define('BASE_URL', rtrim(dirname($_SERVER['SCRIPT_NAME']), '/\\') . '/');
 
 // Contrôleurs autorisés : chaque membre ajoutera le sien à la liste
-$controleurs = ['Auth', 'Client', 'Consommation', 'Anomalie', 'Facture'];
+$controleurs = [
+    'Auth', 'Client', 'Consommation', 'Anomalie', 'Facture',
+    'Parametre', 'Journal', 'Notification', 'Contrat', 'Quartier', 'Agent',
+];
 
 $url        = explode('/', trim($_GET['url'] ?? '', '/'));
 $controleur = $url[0] ?? '';

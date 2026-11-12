@@ -17,9 +17,12 @@ DROP TABLE IF EXISTS `factures`;
 DROP TABLE IF EXISTS `anomalies`;
 DROP TABLE IF EXISTS `consommations`;
 DROP TABLE IF EXISTS `agents`;
+DROP TABLE IF EXISTS `contrats`;
 DROP TABLE IF EXISTS `clients`;
 DROP TABLE IF EXISTS `utilisateurs`;
 DROP TABLE IF EXISTS `tarifs_tranches`;
+DROP TABLE IF EXISTS `quartiers`;
+DROP TABLE IF EXISTS `types_activite`;
 DROP TABLE IF EXISTS `parametres`;
 
 SET FOREIGN_KEY_CHECKS = 1;
@@ -38,10 +41,32 @@ CREATE TABLE `parametres` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================================================
+-- 1b. TABLE : types_activite et quartiers
+-- =============================================================================
+CREATE TABLE `types_activite` (
+    `id_type_activite` TINYINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `code` VARCHAR(30) NOT NULL UNIQUE,
+    `libelle` VARCHAR(80) NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `quartiers` (
+    `id_quartier` INT AUTO_INCREMENT PRIMARY KEY,
+    `nom` VARCHAR(120) NOT NULL,
+    `adresse` TEXT NULL,
+    `id_type_activite` TINYINT UNSIGNED NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY `idx_quartier_type_activite` (`id_type_activite`),
+    FOREIGN KEY (`id_type_activite`) REFERENCES `types_activite`(`id_type_activite`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================================================
 -- 2. TABLE : tarifs_tranches (RG26, RG27, RG50)
 -- =============================================================================
 CREATE TABLE `tarifs_tranches` (
     `id_tarif` INT AUTO_INCREMENT PRIMARY KEY,
+    `id_type_activite` TINYINT UNSIGNED NOT NULL,
     `type_fluide` ENUM('EAU', 'ELECTRICITE') NOT NULL,
     `tranche_num` INT NOT NULL,
     `borne_min` INT NOT NULL,
@@ -49,7 +74,8 @@ CREATE TABLE `tarifs_tranches` (
     `prix_unitaire_dh` DECIMAL(10,4) NOT NULL,
     `description` VARCHAR(100) NOT NULL,
     `actif` BOOLEAN NOT NULL DEFAULT TRUE,
-    UNIQUE KEY `unique_tranche_fluide` (`type_fluide`, `tranche_num`)
+    UNIQUE KEY `unique_tranche_activite_fluide` (`id_type_activite`, `type_fluide`, `tranche_num`),
+    FOREIGN KEY (`id_type_activite`) REFERENCES `types_activite`(`id_type_activite`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================================================
@@ -94,6 +120,25 @@ CREATE TABLE `clients` (
     FOREIGN KEY (`id_utilisateur`) REFERENCES `utilisateurs`(`id_utilisateur`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Un client peut posséder plusieurs contrats, chacun rattaché à un quartier.
+CREATE TABLE `contrats` (
+    `id_contrat` INT AUTO_INCREMENT PRIMARY KEY,
+    `numero_contrat` VARCHAR(40) NOT NULL UNIQUE,
+    `id_client` INT NOT NULL,
+    `id_quartier` INT NULL,
+    `numero_compteur_eau` VARCHAR(50) NULL,
+    `numero_compteur_elec` VARCHAR(50) NULL,
+    `index_initial_eau` INT NOT NULL DEFAULT 0,
+    `index_initial_elec` INT NOT NULL DEFAULT 0,
+    `statut` ENUM('ACTIF', 'SUSPENDU', 'RESILIE') NOT NULL DEFAULT 'ACTIF',
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY `idx_contrats_client` (`id_client`),
+    KEY `idx_contrats_quartier` (`id_quartier`),
+    FOREIGN KEY (`id_client`) REFERENCES `clients`(`id_client`) ON DELETE CASCADE,
+    FOREIGN KEY (`id_quartier`) REFERENCES `quartiers`(`id_quartier`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- =============================================================================
 -- 5. TABLE : agents (RG39, RG40)
 -- =============================================================================
@@ -105,8 +150,10 @@ CREATE TABLE `agents` (
     `telephone` VARCHAR(25) NULL,
     `email` VARCHAR(100) NULL,
     `zone_affectation` VARCHAR(100) NULL,
+    `id_quartier` INT NULL,
     `actif` BOOLEAN NOT NULL DEFAULT TRUE,
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`id_quartier`) REFERENCES `quartiers`(`id_quartier`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================================================
@@ -115,6 +162,7 @@ CREATE TABLE `agents` (
 CREATE TABLE `consommations` (
     `id_conso` INT AUTO_INCREMENT PRIMARY KEY,
     `id_client` INT NOT NULL,
+    `id_contrat` INT NULL,
     `annee` INT NOT NULL,
     `mois` TINYINT NOT NULL,
     `index_eau_precedent` INT NOT NULL DEFAULT 0,
@@ -131,9 +179,11 @@ CREATE TABLE `consommations` (
     `commentaire` TEXT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE KEY `unique_client_mois_annee` (`id_client`, `annee`, `mois`),
+    UNIQUE KEY `unique_contrat_mois_annee` (`id_contrat`, `annee`, `mois`),
+    KEY `idx_consommations_client` (`id_client`),
     CONSTRAINT `chk_mois_conso` CHECK (`mois` BETWEEN 1 AND 12),
-    FOREIGN KEY (`id_client`) REFERENCES `clients`(`id_client`) ON DELETE CASCADE
+    FOREIGN KEY (`id_client`) REFERENCES `clients`(`id_client`) ON DELETE CASCADE,
+    FOREIGN KEY (`id_contrat`) REFERENCES `contrats`(`id_contrat`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================================================
@@ -168,6 +218,7 @@ CREATE TABLE `factures` (
     `id_facture` INT AUTO_INCREMENT PRIMARY KEY,
     `numero_facture` VARCHAR(50) NOT NULL UNIQUE,
     `id_client` INT NOT NULL,
+    `id_contrat` INT NULL,
     `id_conso` INT NULL,
     `periode_mois` TINYINT NOT NULL,
     `periode_annee` INT NOT NULL,
@@ -200,10 +251,12 @@ CREATE TABLE `factures` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     KEY `idx_facture_client` (`id_client`),
+    KEY `idx_facture_contrat` (`id_contrat`),
     KEY `idx_facture_statut` (`statut`),
     KEY `idx_facture_echeance` (`date_echeance`),
     CONSTRAINT `chk_periode_mois` CHECK (`periode_mois` BETWEEN 1 AND 12),
     FOREIGN KEY (`id_client`) REFERENCES `clients`(`id_client`) ON DELETE CASCADE,
+    FOREIGN KEY (`id_contrat`) REFERENCES `contrats`(`id_contrat`) ON DELETE SET NULL,
     FOREIGN KEY (`id_conso`) REFERENCES `consommations`(`id_conso`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -361,6 +414,7 @@ CREATE TABLE `journal_actions` (
     `nouvelle_valeur` TEXT NULL,
     `adresse_ip` VARCHAR(45) NULL,
     `date_action` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY `idx_journal_date_action` (`date_action`, `action_type`),
     FOREIGN KEY (`id_utilisateur`) REFERENCES `utilisateurs`(`id_utilisateur`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -401,26 +455,64 @@ INSERT INTO `parametres` (`cle`, `libelle`, `valeur`, `type_donnee`, `descriptio
 ('MAX_TENTATIVES_ECHECS_CONNEXION', 'Nb max d echecs de connexion', '5', 'INTEGER', 'RG6: Blocage temporaire apres 5 echecs consecutifs'),
 ('DELAI_SESSION_MINUTES', 'Duree de validite de session (min)', '15', 'INTEGER', 'RG7: Expiration de la session apres 15 minutes d inactivite');
 
+INSERT INTO `types_activite` (`id_type_activite`, `code`, `libelle`) VALUES
+(1, 'RESIDENTIEL', 'Résidentiel'),
+(2, 'COMMERCIAL', 'Commercial'),
+(3, 'INDUSTRIEL', 'Industriel');
+
+INSERT INTO `quartiers` (`id_quartier`, `nom`, `id_type_activite`) VALUES
+(1, 'Quartier résidentiel (démo)', 1);
+
 -- Tarifs electricite (RG26) :
-INSERT INTO `tarifs_tranches` (`type_fluide`, `tranche_num`, `borne_min`, `borne_max`, `prix_unitaire_dh`, `description`) VALUES
-('ELECTRICITE', 1, 0, 100, 0.8200, 'Tranche 1 (0 a 100 kWh)'),
-('ELECTRICITE', 2, 101, 150, 0.9200, 'Tranche 2 (101 a 150 kWh)'),
-('ELECTRICITE', 3, 151, NULL, 1.1000, 'Tranche 3 (Plus de 150 kWh)');
+INSERT INTO `tarifs_tranches` (`id_type_activite`, `type_fluide`, `tranche_num`, `borne_min`, `borne_max`, `prix_unitaire_dh`, `description`) VALUES
+(1, 'ELECTRICITE', 1, 0, 100, 0.8200, 'Tranche 1 (0 a 100 kWh)'),
+(1, 'ELECTRICITE', 2, 101, 150, 0.9200, 'Tranche 2 (101 a 150 kWh)'),
+(1, 'ELECTRICITE', 3, 151, NULL, 1.1000, 'Tranche 3 (Plus de 150 kWh)');
 
 -- Tarifs eau (RG27) :
-INSERT INTO `tarifs_tranches` (`type_fluide`, `tranche_num`, `borne_min`, `borne_max`, `prix_unitaire_dh`, `description`) VALUES
-('EAU', 1, 0, 6, 2.3700, 'Tranche 1 (0 a 6 m3)'),
-('EAU', 2, 7, 20, 7.3900, 'Tranche 2 (7 a 20 m3)'),
-('EAU', 3, 21, 35, 10.9800, 'Tranche 3 (21 a 35 m3)'),
-('EAU', 4, 36, NULL, 11.0300, 'Tranche 4 (Plus de 35 m3)');
+INSERT INTO `tarifs_tranches` (`id_type_activite`, `type_fluide`, `tranche_num`, `borne_min`, `borne_max`, `prix_unitaire_dh`, `description`) VALUES
+(1, 'EAU', 1, 0, 6, 2.3700, 'Tranche 1 (0 a 6 m3)'),
+(1, 'EAU', 2, 7, 20, 7.3900, 'Tranche 2 (7 a 20 m3)'),
+(1, 'EAU', 3, 21, 35, 10.9800, 'Tranche 3 (21 a 35 m3)'),
+(1, 'EAU', 4, 36, NULL, 11.0300, 'Tranche 4 (Plus de 35 m3)');
+
+INSERT INTO `tarifs_tranches` (`id_type_activite`, `type_fluide`, `tranche_num`, `borne_min`, `borne_max`, `prix_unitaire_dh`, `description`)
+SELECT t.`id_type_activite`, r.`type_fluide`, r.`tranche_num`, r.`borne_min`, r.`borne_max`,
+       r.`prix_unitaire_dh`, CONCAT(r.`description`, ' - tarif commercial indicatif (+25%)')
+FROM `types_activite` t
+CROSS JOIN (
+    SELECT 'ELECTRICITE' AS `type_fluide`, 1 AS `tranche_num`, 0 AS `borne_min`, 100 AS `borne_max`, 1.0250 AS `prix_unitaire_dh`, 'Tranche 1 (0 a 100 kWh)' AS `description`
+    UNION ALL SELECT 'ELECTRICITE', 2, 101, 150, 1.1500, 'Tranche 2 (101 a 150 kWh)'
+    UNION ALL SELECT 'ELECTRICITE', 3, 151, NULL, 1.3750, 'Tranche 3 (Plus de 150 kWh)'
+    UNION ALL SELECT 'EAU', 1, 0, 6, 2.9625, 'Tranche 1 (0 a 6 m3)'
+    UNION ALL SELECT 'EAU', 2, 7, 20, 9.2375, 'Tranche 2 (7 a 20 m3)'
+    UNION ALL SELECT 'EAU', 3, 21, 35, 13.7250, 'Tranche 3 (21 a 35 m3)'
+    UNION ALL SELECT 'EAU', 4, 36, NULL, 13.7875, 'Tranche 4 (Plus de 35 m3)'
+) r
+WHERE t.`code` = 'COMMERCIAL';
+
+INSERT INTO `tarifs_tranches` (`id_type_activite`, `type_fluide`, `tranche_num`, `borne_min`, `borne_max`, `prix_unitaire_dh`, `description`)
+SELECT t.`id_type_activite`, r.`type_fluide`, r.`tranche_num`, r.`borne_min`, r.`borne_max`,
+       r.`prix_unitaire_dh`, CONCAT(r.`description`, ' - tarif industriel indicatif (+50%)')
+FROM `types_activite` t
+CROSS JOIN (
+    SELECT 'ELECTRICITE' AS `type_fluide`, 1 AS `tranche_num`, 0 AS `borne_min`, 100 AS `borne_max`, 1.2300 AS `prix_unitaire_dh`, 'Tranche 1 (0 a 100 kWh)' AS `description`
+    UNION ALL SELECT 'ELECTRICITE', 2, 101, 150, 1.3800, 'Tranche 2 (101 a 150 kWh)'
+    UNION ALL SELECT 'ELECTRICITE', 3, 151, NULL, 1.6500, 'Tranche 3 (Plus de 150 kWh)'
+    UNION ALL SELECT 'EAU', 1, 0, 6, 3.5550, 'Tranche 1 (0 a 6 m3)'
+    UNION ALL SELECT 'EAU', 2, 7, 20, 11.0850, 'Tranche 2 (7 a 20 m3)'
+    UNION ALL SELECT 'EAU', 3, 21, 35, 16.4700, 'Tranche 3 (21 a 35 m3)'
+    UNION ALL SELECT 'EAU', 4, 36, NULL, 16.5450, 'Tranche 4 (Plus de 35 m3)'
+) r
+WHERE t.`code` = 'INDUSTRIEL';
 
 -- Compte Fournisseur (login / email: admin@fournisseur.ma | mot de passe: Admin1234@)
 INSERT INTO `utilisateurs` (`id_utilisateur`, `identifiant`, `email`, `mot_de_passe`, `role`, `statut_compte`) VALUES
 (1, 'admin@fournisseur.ma', 'admin@fournisseur.ma', '$2y$10$P8YaP.KbH5Rp48f8LkPuaOWihK9xgcz8/JhDpKMFhKaEXJ7S3abYm', 'FOURNISSEUR', 'ACTIF');
 
 -- Agent de tournee (RG39)
-INSERT INTO `agents` (`id_agent`, `matricule`, `nom`, `prenom`, `telephone`, `email`, `zone_affectation`, `actif`) VALUES
-(1, 'AGT-001', 'Alami', 'Karim', '0661122334', 'k.alami@fournisseur.ma', 'Tetouan Centre', TRUE);
+INSERT INTO `agents` (`id_agent`, `matricule`, `nom`, `prenom`, `telephone`, `email`, `zone_affectation`, `id_quartier`, `actif`) VALUES
+(1, 'AGT-001', 'Alami', 'Karim', '0661122334', 'k.alami@fournisseur.ma', 'Tetouan Centre', 1, TRUE);
 
 -- Clients tests (CLT-2026-000101 et CLT-2026-000102 | mot de passe: Client1234@)
 INSERT INTO `utilisateurs` (`id_utilisateur`, `identifiant`, `email`, `mot_de_passe`, `role`, `statut_compte`) VALUES
@@ -431,13 +523,17 @@ INSERT INTO `clients` (`id_client`, `id_utilisateur`, `numero_client`, `cin`, `n
 (1, 2, 'CLT-2026-000101', 'K123456', 'Benali', 'Omar', '12 Avenue Hassan II, Tetouan', '0662001122', 'CPT-EAU-1001', 'CPT-ELEC-2001', 120, 1500, 0.00, 'ACTIF'),
 (2, 3, 'CLT-2026-000102', 'L987654', 'El Amrani', 'Fatima', '45 Boulevard Mohamed V, Martil', '0663445566', 'CPT-EAU-1002', 'CPT-ELEC-2002', 85, 920, 0.00, 'ACTIF');
 
+INSERT INTO `contrats` (`id_contrat`, `numero_contrat`, `id_client`, `id_quartier`, `numero_compteur_eau`, `numero_compteur_elec`, `index_initial_eau`, `index_initial_elec`) VALUES
+(1, 'CTR-CLT-2026-000101', 1, 1, 'CPT-EAU-1001', 'CPT-ELEC-2001', 120, 1500),
+(2, 'CTR-CLT-2026-000102', 2, 1, 'CPT-EAU-1002', 'CPT-ELEC-2002', 85, 920);
+
 -- Donnees du cas chiffre officiel (Section 4.6.4 p.16-17) :
 -- 134 kWh elec (123.28 DH) + 9 m3 eau (66.51 DH) -> HT: 189.79 DH, TVA 18%: 34.16 DH, TTC: 223.95 DH
-INSERT INTO `consommations` (`id_conso`, `id_client`, `annee`, `mois`, `index_eau_precedent`, `index_eau_nouveau`, `conso_eau`, `photo_compteur_eau`, `index_elec_precedent`, `index_elec_nouveau`, `conso_elec`, `photo_compteur_elec`, `date_saisie`, `type_saisie`, `statut`) VALUES
-(1, 1, 2026, 9, 120, 129, 9, 'uploads/compteurs/eau_clt101_202609.jpg', 1500, 1634, 134, 'uploads/compteurs/elec_clt101_202609.jpg', '2026-09-22 10:15:00', 'REELLE', 'VALIDE');
+INSERT INTO `consommations` (`id_conso`, `id_client`, `id_contrat`, `annee`, `mois`, `index_eau_precedent`, `index_eau_nouveau`, `conso_eau`, `photo_compteur_eau`, `index_elec_precedent`, `index_elec_nouveau`, `conso_elec`, `photo_compteur_elec`, `date_saisie`, `type_saisie`, `statut`) VALUES
+(1, 1, 1, 2026, 9, 120, 129, 9, 'uploads/compteurs/eau_clt101_202609.jpg', 1500, 1634, 134, 'uploads/compteurs/elec_clt101_202609.jpg', '2026-09-22 10:15:00', 'REELLE', 'VALIDE');
 
-INSERT INTO `factures` (`id_facture`, `numero_facture`, `id_client`, `id_conso`, `periode_mois`, `periode_annee`, `date_emission`, `date_echeance`, `type_facture`, `index_eau_debut`, `index_eau_fin`, `conso_eau`, `montant_ht_eau`, `index_elec_debut`, `index_elec_fin`, `conso_elec`, `montant_ht_elec`, `montant_ht`, `taux_tva`, `montant_tva`, `montant_ttc`, `credit_deduit`, `penalite_retard`, `penalite_appliquee`, `montant_total_a_payer`, `montant_paye`, `reste_a_payer`, `statut`, `photo_eau_facture`, `photo_elec_facture`) VALUES
-(1, 'FAC-2026-09-000101', 1, 1, 9, 2026, '2026-10-01', '2026-10-15', 'MENSUELLE', 120, 129, 9, 66.51, 1500, 1634, 134, 123.28, 189.79, 18.00, 34.16, 223.95, 0.00, 0.00, FALSE, 223.95, 0.00, 223.95, 'IMPAYEE', 'uploads/compteurs/eau_clt101_202609.jpg', 'uploads/compteurs/elec_clt101_202609.jpg');
+INSERT INTO `factures` (`id_facture`, `numero_facture`, `id_client`, `id_contrat`, `id_conso`, `periode_mois`, `periode_annee`, `date_emission`, `date_echeance`, `type_facture`, `index_eau_debut`, `index_eau_fin`, `conso_eau`, `montant_ht_eau`, `index_elec_debut`, `index_elec_fin`, `conso_elec`, `montant_ht_elec`, `montant_ht`, `taux_tva`, `montant_tva`, `montant_ttc`, `credit_deduit`, `penalite_retard`, `penalite_appliquee`, `montant_total_a_payer`, `montant_paye`, `reste_a_payer`, `statut`, `photo_eau_facture`, `photo_elec_facture`) VALUES
+(1, 'FAC-2026-09-000101', 1, 1, 1, 9, 2026, '2026-10-01', '2026-10-15', 'MENSUELLE', 120, 129, 9, 66.51, 1500, 1634, 134, 123.28, 189.79, 18.00, 34.16, 223.95, 0.00, 0.00, FALSE, 223.95, 0.00, 223.95, 'IMPAYEE', 'uploads/compteurs/eau_clt101_202609.jpg', 'uploads/compteurs/elec_clt101_202609.jpg');
 
 INSERT INTO `journal_actions` (`id_utilisateur`, `action_type`, `table_concernee`, `id_entite`, `description`, `adresse_ip`) VALUES
 (1, 'INITIALISATION_SYSTEME', 'parametres', 1, 'Initialisation du schema de la base de donnees', '127.0.0.1');

@@ -7,6 +7,7 @@ $client = $client ?? [];
 $prenom = $client['prenom'] ?? '';
 $nom = $client['nom'] ?? '';
 $numero = $client['numero_client'] ?? '';
+$notificationsNonLues = (int) ($notificationsNonLues ?? 0);
 $initiales = mb_strtoupper(mb_substr($prenom, 0, 1) . mb_substr($nom, 0, 1));
 
 $icones = [
@@ -28,7 +29,7 @@ $menu = [
     ['Mes factures',      BASE_URL . 'Facture/liste',             'facture', 'Facture/liste'],
     ['Paiement en ligne', '#',                                    'carte',   ''],
     ['Mes réclamations',  '#',                                    'message', ''],
-    ['Notifications',     '#',                                    'cloche',  ''],
+    ['Notifications',     BASE_URL . 'Notification/liste',        'cloche',  'Notification/liste'],
 ];
 ?>
 <aside class="sidebar">
@@ -42,6 +43,7 @@ $menu = [
             <a class="nav-item<?= $actif ? ' actif' : '' ?>" href="<?= htmlspecialchars($lien) ?>">
                 <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><?= $icones[$icone] ?></svg>
                 <span><?= htmlspecialchars($libelle) ?></span>
+                <?php if ($icone === 'cloche' && $notificationsNonLues > 0): ?><span class="notification-badge"><?= $notificationsNonLues ?></span><?php endif; ?>
                 <?php if ($actif): ?><svg class="ico chevron" viewBox="0 0 24 24" aria-hidden="true"><?= $icones['chevron'] ?></svg><?php endif; ?>
             </a>
         <?php endforeach; ?>

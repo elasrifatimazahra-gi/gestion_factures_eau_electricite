@@ -2,7 +2,7 @@
 require_once "Connexion.php";
 $link = Connexion();
 
-function lister()
+function bd_client_lister()
 {
     global $link;
     $sql = "SELECT c.*, u.statut_compte,
@@ -12,7 +12,7 @@ function lister()
     return mysqli_query($link,$sql);
 }
 
-function rechercher($terme)
+function bd_client_rechercher($terme)
 {
    global $link;
    $terme =  mysqli_real_escape_string($link,$terme);
@@ -24,13 +24,13 @@ function rechercher($terme)
    return mysqli_query($link,$sql);
 }
 
-function trouverParId($id){
+function bd_client_trouver_par_id($id){
     global $link;
     $sql = "select * from clients where id_client = $id";
     return mysqli_query($link,$sql);
 }
 
-function genererNumClient(){
+function bd_client_generer_numero(){
     global $link;
     $annee_actuelle = date("Y");
     $prefix = "CL-" . $annee_actuelle . "-";
@@ -47,7 +47,7 @@ function genererNumClient(){
     }
 
 
-function ajouter($id_utilisateur, $numero_client, $cin, $nom, $prenom, $adresse, $telephone, $numero_compteur_eau, $numero_compteur_elec, $index_initial_eau, $index_initial_elec) {
+function bd_client_ajouter($id_utilisateur, $numero_client, $cin, $nom, $prenom, $adresse, $telephone, $numero_compteur_eau, $numero_compteur_elec, $index_initial_eau, $index_initial_elec) {
     global $link;
     
     // Securite
@@ -75,7 +75,7 @@ function ajouter($id_utilisateur, $numero_client, $cin, $nom, $prenom, $adresse,
 }
 
 
-function modifier($id_client, $cin, $nom, $prenom, $adresse, $telephone, $numero_compteur_eau, $numero_compteur_elec,$index_initial_eau, $index_initial_elec) {
+function bd_client_modifier($id_client, $cin, $nom, $prenom, $adresse, $telephone, $numero_compteur_eau, $numero_compteur_elec,$index_initial_eau, $index_initial_elec) {
     global $link;
     //Securite
     $id_client            = mysqli_real_escape_string($link, $id_client);
@@ -94,7 +94,7 @@ function modifier($id_client, $cin, $nom, $prenom, $adresse, $telephone, $numero
     return mysqli_query($link, $sql);
 }
 
-function changerMotDePasse($id_user, $nouveauPswd) {
+function bd_client_changer_mot_de_passe($id_user, $nouveauPswd) {
     global $link;
     // Securite
     $id_user = mysqli_real_escape_string($link, $id_user);
@@ -105,7 +105,7 @@ function changerMotDePasse($id_user, $nouveauPswd) {
     return mysqli_query($link, $sql);
 }
 
-function statutCompteClient($cin){
+function bd_client_statut_compte($cin){
     global $link;
     $cin = mysqli_real_escape_string($link,$cin);
     $sql = "SELECT u.statut_compte,
@@ -117,7 +117,7 @@ function statutCompteClient($cin){
     return mysqli_fetch_assoc($res);
 }
 
-function debloquerClient($cin){
+function bd_client_debloquer($cin){
     global $link;
     $cin = mysqli_real_escape_string($link,$cin);
     $sql = "UPDATE utilisateurs
@@ -126,7 +126,7 @@ function debloquerClient($cin){
     return mysqli_query($link,$sql);
 }
 
-function cinExiste($cin){
+function bd_client_cin_existe($cin){
     global $link;
     $cin = mysqli_real_escape_string($link,$cin);
     $sql = "select id_client from clients where cin='$cin'";

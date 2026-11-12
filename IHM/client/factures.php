@@ -6,6 +6,7 @@
 $prenom = $client['prenom'] ?? '';
 $nom = $client['nom'] ?? '';
 $initiales = mb_strtoupper(mb_substr($prenom, 0, 1) . mb_substr($nom, 0, 1));
+$notificationsNonLues = (int) ($notificationsNonLues ?? 0);
 
 $icones = [
     'goutte'   => '<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>',
@@ -29,7 +30,7 @@ $menu = [
     ['Mes factures',     BASE_URL . 'Facture/liste',              'facture', true],
     ['Paiement en ligne', '#',                                     'carte',   false],
     ['Mes réclamations', '#',                                      'message', false],
-    ['Notifications',    '#',                                      'cloche',  false],
+    ['Notifications',    BASE_URL . 'Notification/liste',          'cloche',  false],
 ];
 ?>
 <!DOCTYPE html>
@@ -40,6 +41,7 @@ $menu = [
     <title>Mes factures</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/factures.css?v=<?= filemtime(ROOT . 'assets/css/factures.css') ?>">
+    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/Parametre.css?v=<?= filemtime(ROOT . 'assets/css/Parametre.css') ?>">
 </head>
 <body>
 <div class="appli">
@@ -55,6 +57,7 @@ $menu = [
                 <a class="nav-item<?= $actif ? ' actif' : '' ?>" href="<?= htmlspecialchars($lien) ?>">
                     <?= $ico($icone) ?>
                     <span><?= htmlspecialchars($libelle) ?></span>
+                    <?php if ($icone === 'cloche' && $notificationsNonLues > 0): ?><span class="notification-badge"><?= $notificationsNonLues ?></span><?php endif; ?>
                     <?php if ($actif): ?><?= $ico('chevron', 'chevron') ?><?php endif; ?>
                 </a>
             <?php endforeach; ?>
@@ -74,7 +77,10 @@ $menu = [
             <div class="statut-portail"><span class="point-vert"></span> Amanor opérationnel</div>
             <div class="topbar-droite">
                 <div class="langues"><span class="actif">FR</span><span>AR</span></div>
-                <span class="cloche"><?= $ico('cloche') ?></span>
+                <a class="cloche m1-bell" href="<?= BASE_URL ?>Notification/liste" aria-label="Notifications non lues : <?= $notificationsNonLues ?>">
+                    <?= $ico('cloche') ?>
+                    <?php if ($notificationsNonLues > 0): ?><span class="m1-bell-count"><?= $notificationsNonLues ?></span><?php endif; ?>
+                </a>
                 <span class="separateur"></span>
                 <a class="deconnexion" href="<?= BASE_URL ?>Auth/logout"><?= $ico('sortie') ?> Déconnexion</a>
             </div>

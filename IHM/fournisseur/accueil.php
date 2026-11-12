@@ -29,14 +29,16 @@ $ico = function ($nom, $classe = '') use ($icones) {
 $menu = [
     ['Tableau de bord', BASE_URL . 'Auth/accueil',  'tableau',    true,  true],
     ['Clients',         BASE_URL . 'Client/index',   'clients',    false, true],
+    ['Quartiers',       BASE_URL . 'Quartier/index', 'calendrier', false, true],
+    ['Agents',          BASE_URL . 'Agent/index',    'clients',    false, true],
     ['Anomalies',       BASE_URL . 'Anomalie/index', 'anomalie',   false, true],
     ['Réclamations',    '#',                         'message',    false, false],
     ['Paiements',       '#',                         'carte',      false, false],
     ['Coupures',        '#',                         'eclair',     false, false],
     ['Sanctions',       '#',                         'bouclier',   false, false],
     ['Contrôle annuel', '#',                         'calendrier', false, false],
-    ['Paramètres',      '#',                         'reglages',   false, false],
-    ['Journal',         '#',                         'journal',    false, false],
+    ['Paramètres',      BASE_URL . 'Parametre/index', 'reglages',   false, true],
+    ['Journal',         BASE_URL . 'Journal/index',   'journal',    false, true],
 ];
 
 $statuts = [
