@@ -3,7 +3,57 @@
 require_once ROOT . 'BD/Agent.php';
 require_once ROOT . 'BD/Quartier.php';
 require_once ROOT . 'BD/Journal.php';
+require_once ROOT . 'BD/Consommation.php';
+require_once ROOT . 'BD/Controle.php';
+require_once ROOT . 'BD/Utilisateur.php';
 require_once ROOT . 'Traitement/Auth.php';
+
+function agent_id_connecte()
+{
+    exiger_role('AGENT');
+    $idAgent = bd_utilisateur_id_agent((int) $_SESSION['id_utilisateur']);
+    if ($idAgent === null) {
+        http_response_code(403);
+        include ROOT . 'IHM/auth/acces_refuse.php';
+        exit;
+    }
+    $_SESSION['id_agent'] = $idAgent;
+    return $idAgent;
+}
+
+function Agent_accueil($param = null)
+{
+    $idAgent = agent_id_connecte();
+    $tournees = bd_agent_tournee_lister($idAgent);
+    $message = $_SESSION['message_agent_espace'] ?? '';
+    $erreur = $_SESSION['erreur_agent_espace'] ?? '';
+    unset($_SESSION['message_agent_espace'], $_SESSION['erreur_agent_espace']);
+    include ROOT . 'IHM/agent/accueil.php';
+}
+
+function Agent_releve($param = null)
+{
+    agent_id_connecte();
+    $suffixe = ctype_digit((string) $param) ? '/' . (int) $param : '';
+    rediriger('Consommation/saisie_mensuelle' . $suffixe);
+}
+
+function Agent_historique($param = null)
+{
+    $idAgent = agent_id_connecte();
+    $historique = bd_consommation_historique_agent($idAgent);
+    $historiqueControles = bd_controle_annuel_historique_agent($idAgent);
+    include ROOT . 'IHM/agent/historique.php';
+}
+
+function Agent_depotFichier($param = null)
+{
+    agent_id_connecte();
+    $erreur = $_SESSION['erreur_agent_espace'] ?? '';
+    $message = $_SESSION['message_agent_espace'] ?? '';
+    unset($_SESSION['erreur_agent_espace'], $_SESSION['message_agent_espace']);
+    include ROOT . 'IHM/agent/depot_fichier.php';
+}
 
 function Agent_index($param = null)
 {
@@ -33,6 +83,7 @@ function Agent_enregistrer($param = null)
         $valeur = $_POST[$champ] ?? '';
         $champs[$champ] = is_string($valeur) ? trim($valeur) : '';
     }
+    $motDePasse = $_POST['mot_de_passe'] ?? '';
     $idQuartier = ($_POST['id_quartier'] ?? '') === ''
         ? null
         : filter_var($_POST['id_quartier'], FILTER_VALIDATE_INT);
@@ -42,8 +93,9 @@ function Agent_enregistrer($param = null)
         || $champs['nom'] === '' || mb_strlen($champs['nom']) > 100
         || $champs['prenom'] === '' || mb_strlen($champs['prenom']) > 100
         || ($champs['email'] !== '' && !filter_var($champs['email'], FILTER_VALIDATE_EMAIL))
-        || ($idQuartier !== null && (!$idQuartier || !in_array((int) $idQuartier, $idsQuartiers, true)))) {
-        $_SESSION['erreur_agent'] = 'Veuillez vérifier les informations de l’agent et son quartier.';
+        || !is_string($motDePasse) || strlen($motDePasse) < 12
+        || !$idQuartier || !in_array((int) $idQuartier, $idsQuartiers, true)) {
+        $_SESSION['erreur_agent'] = 'Vérifiez les informations, le quartier et un mot de passe de 12 caractères minimum.';
         rediriger('Agent/index');
     }
 
@@ -52,6 +104,10 @@ function Agent_enregistrer($param = null)
         throw new RuntimeException("Impossible de démarrer la création de l’agent : " . mysqli_error($link));
     }
     try {
+        $idUtilisateur = bd_utilisateur_creer($champs['matricule'], $motDePasse, 'AGENT');
+        if (!$idUtilisateur) {
+            throw new RuntimeException("Impossible de créer le compte de l’agent.");
+        }
         $idAgent = bd_agent_enregistrer(
             $champs['matricule'],
             $champs['nom'],
@@ -59,7 +115,8 @@ function Agent_enregistrer($param = null)
             $champs['telephone'] !== '' ? $champs['telephone'] : null,
             $champs['email'] !== '' ? $champs['email'] : null,
             $champs['zone_affectation'] !== '' ? $champs['zone_affectation'] : null,
-            $idQuartier ? (int) $idQuartier : null
+            $idQuartier ? (int) $idQuartier : null,
+            (int) $idUtilisateur
         );
         bd_journal_enregistrer(
             (int) $_SESSION['id_utilisateur'],
@@ -73,7 +130,7 @@ function Agent_enregistrer($param = null)
         }
     } catch (RuntimeException $exception) {
         mysqli_rollback($link);
-        $_SESSION['erreur_agent'] = 'Impossible d’enregistrer l’agent. Vérifiez le matricule puis réessayez.';
+        $_SESSION['erreur_agent'] = 'Impossible de créer l’agent ou son compte. Vérifiez que le matricule est unique.';
         rediriger('Agent/index');
     }
 

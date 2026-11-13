@@ -7,6 +7,7 @@ define('BASE_URL', rtrim(dirname($_SERVER['SCRIPT_NAME']), '/\\') . '/');
 $controleurs = [
     'Auth', 'Client', 'Consommation', 'Anomalie', 'Facture',
     'Parametre', 'Journal', 'Notification', 'Contrat', 'Quartier', 'Agent',
+    'Controle', 'Import',
 ];
 
 $url        = explode('/', trim($_GET['url'] ?? '', '/'));

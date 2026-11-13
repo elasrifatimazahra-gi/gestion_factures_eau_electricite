@@ -16,11 +16,12 @@ include ROOT . 'IHM/layouts/fournisseur_header.php';
             <label><span>Prénom</span><input name="prenom" maxlength="100" required></label>
             <label><span>Téléphone</span><input name="telephone" maxlength="25"></label>
             <label><span>E-mail</span><input type="email" name="email" maxlength="100"></label>
+            <label><span>Mot de passe initial (12 caractères minimum)</span><input type="password" name="mot_de_passe" minlength="12" autocomplete="new-password" required></label>
             <label><span>Zone</span><input name="zone_affectation" maxlength="100"></label>
             <label>
                 <span>Quartier</span>
-                <select name="id_quartier">
-                    <option value="">Non affecté</option>
+                <select name="id_quartier" required>
+                    <option value="">Choisir un quartier</option>
                     <?php foreach ($quartiers as $quartier): ?>
                         <option value="<?= (int) $quartier['id_quartier'] ?>"><?= htmlspecialchars($quartier['nom']) ?></option>
                     <?php endforeach; ?>
@@ -33,11 +34,11 @@ include ROOT . 'IHM/layouts/fournisseur_header.php';
     <div class="m1-table-wrap">
         <table class="m1-table">
             <thead>
-                <tr><th>Matricule</th><th>Agent</th><th>Contact</th><th>Zone</th><th>Quartier</th></tr>
+                <tr><th>Matricule</th><th>Agent</th><th>Contact</th><th>Zone</th><th>Quartier</th><th>Compte</th></tr>
             </thead>
             <tbody>
                 <?php if (!$agents): ?>
-                    <tr><td class="m1-empty" colspan="5">Aucun agent n’est enregistré.</td></tr>
+                    <tr><td class="m1-empty" colspan="6">Aucun agent n’est enregistré.</td></tr>
                 <?php else: ?>
                     <?php foreach ($agents as $agent): ?>
                         <tr>
@@ -46,6 +47,7 @@ include ROOT . 'IHM/layouts/fournisseur_header.php';
                             <td><?= htmlspecialchars($agent['telephone'] ?: ($agent['email'] ?: '—')) ?></td>
                             <td><?= htmlspecialchars($agent['zone_affectation'] ?? '—') ?></td>
                             <td><?= htmlspecialchars($agent['quartier'] ?? 'Non affecté') ?></td>
+                            <td><?= $agent['id_utilisateur'] ? 'Actif' : 'Sans compte' ?></td>
                         </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>

@@ -36,14 +36,41 @@
 
             <?php $ouvert = (int) date('j') >= 1; ?>
             <section class="saisie-bandeau<?= $ouvert ? '' : ' ferme' ?>">
-                <?php if ($ouvert): ?>
-                    <strong>Période ouverte.</strong> Une seule déclaration est autorisée par mois.
+                <?php if (!$contrats): ?>
+                    <strong>Aucun contrat actif.</strong> Contactez votre fournisseur pour faire vérifier votre compte.
+                <?php elseif ($dejaSaisi): ?>
+                    <strong>Déclaration déjà enregistrée.</strong> Vous avez saisi ce contrat pour le mois en cours.
+                <?php elseif ($ouvert): ?>
+                    <strong>Période ouverte.</strong> Une déclaration est autorisée par contrat et par mois.
                 <?php else: ?>
                     <strong>Période fermée.</strong> La saisie ouvre le 18 du mois.
                 <?php endif; ?>
             </section>
 
+            <?php if ($contrats): ?>
+                <form class="saisie-contrat" method="get" action="<?= BASE_URL ?>Consommation/declaration">
+                    <label for="contrat">Contrat à déclarer</label>
+                    <select id="contrat" name="contrat" required>
+                        <option value="">Choisir un contrat</option>
+                        <?php foreach ($contrats as $contrat): ?>
+                            <option value="<?= (int) $contrat['id_contrat'] ?>" <?= (int) $contrat['id_contrat'] === (int) $idContrat ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($contrat['numero_contrat']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <button type="submit">Afficher</button>
+                </form>
+            <?php endif; ?>
+
+            <?php if ($contratSelectionne && !$dejaSaisi && $ouvert): ?>
             <form method="POST" action="<?= BASE_URL ?>Consommation/enregistrer" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrf_token_m1()) ?>">
+                <input type="hidden" name="id_contrat" value="<?= (int) $idContrat ?>">
+                <p class="saisie-contrat-selectionne">
+                    Contrat <?= htmlspecialchars($contratSelectionne['numero_contrat']) ?> ·
+                    compteurs eau <?= htmlspecialchars($contratSelectionne['numero_compteur_eau'] ?? '—') ?>,
+                    électricité <?= htmlspecialchars($contratSelectionne['numero_compteur_elec'] ?? '—') ?>
+                </p>
                 <div class="saisie-grille">
 
                     <!-- Carte eau -->
@@ -114,6 +141,9 @@
                     <button type="submit">Envoyer ma déclaration →</button>
                 </div>
             </form>
+            <?php elseif ($contrats && !$contratSelectionne): ?>
+                <p class="saisie-alerte">Choisissez un contrat pour afficher les index précédents et saisir votre déclaration.</p>
+            <?php endif; ?>
         </main>
     </div>
 

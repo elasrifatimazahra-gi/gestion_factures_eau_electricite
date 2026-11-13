@@ -68,13 +68,16 @@ function traitement_anomalie_moyenne(
     $idClient,
     $annee,
     $mois,
-    $fluide
+    $fluide,
+    $idContrat = null
 ) {
     if (!in_array($fluide, ['eau', 'elec'], true)) {
         return 0.0;
     }
 
     $colonne = $fluide === 'eau' ? 'conso_eau' : 'conso_elec';
+    $champFiltre = $idContrat !== null ? 'id_contrat' : 'id_client';
+    $idFiltre = $idContrat !== null ? (int) $idContrat : (int) $idClient;
     $link = Connexion();
 
     $stmt = mysqli_prepare(
@@ -83,7 +86,7 @@ function traitement_anomalie_moyenne(
          FROM (
              SELECT $colonne
              FROM consommations
-             WHERE id_client = ?
+             WHERE $champFiltre = ?
                AND statut IN ('VALIDE', 'REGULARISEE')
                AND (
                     annee < ?
@@ -101,7 +104,7 @@ function traitement_anomalie_moyenne(
     mysqli_stmt_bind_param(
         $stmt,
         "iiii",
-        $idClient,
+        $idFiltre,
         $annee,
         $annee,
         $mois
@@ -277,7 +280,8 @@ function detecterAnomalies($c)
             (int) $c['id_client'],
             (int) $c['annee'],
             (int) $c['mois'],
-            $cle
+            $cle,
+            isset($c['id_contrat']) ? (int) $c['id_contrat'] : null
         );
 
         if ($moyenne > 0) {

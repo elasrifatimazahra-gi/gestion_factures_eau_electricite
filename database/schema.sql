@@ -86,7 +86,7 @@ CREATE TABLE `utilisateurs` (
     `identifiant` VARCHAR(50) NOT NULL UNIQUE,
     `email` VARCHAR(100) NULL UNIQUE,
     `mot_de_passe` VARCHAR(255) NOT NULL,
-    `role` ENUM('CLIENT', 'FOURNISSEUR') NOT NULL DEFAULT 'CLIENT',
+    `role` ENUM('CLIENT', 'FOURNISSEUR', 'AGENT') NOT NULL DEFAULT 'CLIENT',
     `statut_compte` ENUM('ACTIF', 'BLOQUE_TENTATIVES', 'BLOQUE_GESTIONNAIRE', 'COUPE') NOT NULL DEFAULT 'ACTIF',
     `tentatives_echouees` INT NOT NULL DEFAULT 0,
     `bloque_jusqu_a` DATETIME NULL,
@@ -144,6 +144,7 @@ CREATE TABLE `contrats` (
 -- =============================================================================
 CREATE TABLE `agents` (
     `id_agent` INT AUTO_INCREMENT PRIMARY KEY,
+    `id_utilisateur` INT NULL,
     `matricule` VARCHAR(30) NOT NULL UNIQUE,
     `nom` VARCHAR(100) NOT NULL,
     `prenom` VARCHAR(100) NOT NULL,
@@ -153,6 +154,9 @@ CREATE TABLE `agents` (
     `id_quartier` INT NULL,
     `actif` BOOLEAN NOT NULL DEFAULT TRUE,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY `unique_agent_utilisateur` (`id_utilisateur`),
+    CONSTRAINT `fk_agents_utilisateur`
+        FOREIGN KEY (`id_utilisateur`) REFERENCES `utilisateurs`(`id_utilisateur`) ON DELETE SET NULL,
     FOREIGN KEY (`id_quartier`) REFERENCES `quartiers`(`id_quartier`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -163,6 +167,7 @@ CREATE TABLE `consommations` (
     `id_conso` INT AUTO_INCREMENT PRIMARY KEY,
     `id_client` INT NOT NULL,
     `id_contrat` INT NULL,
+    `id_agent` INT NULL,
     `annee` INT NOT NULL,
     `mois` TINYINT NOT NULL,
     `index_eau_precedent` INT NOT NULL DEFAULT 0,
@@ -174,16 +179,19 @@ CREATE TABLE `consommations` (
     `conso_elec` INT NOT NULL DEFAULT 0,
     `photo_compteur_elec` VARCHAR(255) NULL,
     `date_saisie` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `type_saisie` ENUM('REELLE', 'ESTIMEE', 'CORRIGEE') NOT NULL DEFAULT 'REELLE',
+    `type_saisie` ENUM('REELLE', 'MANUELLE', 'ESTIMEE', 'CORRIGEE') NOT NULL DEFAULT 'REELLE',
     `statut` ENUM('VALIDE', 'ANOMALIE', 'EN_ATTENTE_CORRECTION', 'REGULARISEE') NOT NULL DEFAULT 'VALIDE',
     `commentaire` TEXT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY `unique_contrat_mois_annee` (`id_contrat`, `annee`, `mois`),
     KEY `idx_consommations_client` (`id_client`),
+    KEY `idx_consommations_agent` (`id_agent`),
     CONSTRAINT `chk_mois_conso` CHECK (`mois` BETWEEN 1 AND 12),
     FOREIGN KEY (`id_client`) REFERENCES `clients`(`id_client`) ON DELETE CASCADE,
-    FOREIGN KEY (`id_contrat`) REFERENCES `contrats`(`id_contrat`) ON DELETE SET NULL
+    FOREIGN KEY (`id_contrat`) REFERENCES `contrats`(`id_contrat`) ON DELETE SET NULL,
+    CONSTRAINT `fk_consommations_agent`
+        FOREIGN KEY (`id_agent`) REFERENCES `agents`(`id_agent`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================================================
@@ -256,7 +264,8 @@ CREATE TABLE `factures` (
     KEY `idx_facture_echeance` (`date_echeance`),
     CONSTRAINT `chk_periode_mois` CHECK (`periode_mois` BETWEEN 1 AND 12),
     FOREIGN KEY (`id_client`) REFERENCES `clients`(`id_client`) ON DELETE CASCADE,
-    FOREIGN KEY (`id_contrat`) REFERENCES `contrats`(`id_contrat`) ON DELETE SET NULL,
+    CONSTRAINT `fk_factures_contrat`
+        FOREIGN KEY (`id_contrat`) REFERENCES `contrats`(`id_contrat`) ON DELETE SET NULL,
     FOREIGN KEY (`id_conso`) REFERENCES `consommations`(`id_conso`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -311,6 +320,7 @@ CREATE TABLE `controle_annuel` (
     `id_controle` INT AUTO_INCREMENT PRIMARY KEY,
     `annee` INT NOT NULL,
     `id_client` INT NOT NULL,
+    `id_contrat` INT NULL,
     `id_agent` INT NOT NULL,
     `date_releve_agent` DATE NOT NULL,
     `conso_eau_declaree` INT NOT NULL DEFAULT 0,
@@ -328,8 +338,11 @@ CREATE TABLE `controle_annuel` (
     `id_facture_regularisation` INT NULL,
     `observations` TEXT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY `unique_client_annee_controle` (`id_client`, `annee`),
+    KEY `idx_controle_client` (`id_client`),
+    UNIQUE KEY `unique_contrat_annee_controle` (`id_contrat`, `annee`),
     FOREIGN KEY (`id_client`) REFERENCES `clients`(`id_client`) ON DELETE CASCADE,
+    CONSTRAINT `fk_controle_contrat`
+        FOREIGN KEY (`id_contrat`) REFERENCES `contrats`(`id_contrat`) ON DELETE SET NULL,
     FOREIGN KEY (`id_agent`) REFERENCES `agents`(`id_agent`) ON DELETE RESTRICT,
     FOREIGN KEY (`valide_par`) REFERENCES `utilisateurs`(`id_utilisateur`) ON DELETE SET NULL,
     FOREIGN KEY (`id_facture_regularisation`) REFERENCES `factures`(`id_facture`) ON DELETE SET NULL
@@ -424,7 +437,7 @@ CREATE TABLE `journal_actions` (
 CREATE TABLE `import_lignes_rejetees` (
     `id_rejet` INT AUTO_INCREMENT PRIMARY KEY,
     `nom_fichier` VARCHAR(100) NOT NULL DEFAULT 'Consommation_Annuelle.txt',
-    `annee` INT NOT NULL,
+    `annee` INT NULL,
     `numero_ligne` INT NOT NULL,
     `contenu_brut` TEXT NOT NULL,
     `motif_rejet` VARCHAR(255) NOT NULL,

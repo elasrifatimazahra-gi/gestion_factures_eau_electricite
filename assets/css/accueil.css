@@ -24,9 +24,9 @@
     font-size: 12px; font-weight: 700; letter-spacing: .1em; color: #1f6a43;
 }
 .bandeau-texte strong { font-size: 18px; color: var(--texte); }
-.bandeau-hors-periode { background: #f1f4f2; border-color: var(--bord); }
-.bandeau-hors-periode .bandeau-icone { background: #e6ebe8; color: var(--gris); }
-.bandeau-hors-periode .bandeau-etiquette { color: var(--gris); }
+.bandeau-hors-periode, .bandeau-sans-contrat { background: #f1f4f2; border-color: var(--bord); }
+.bandeau-hors-periode .bandeau-icone, .bandeau-sans-contrat .bandeau-icone { background: #e6ebe8; color: var(--gris); }
+.bandeau-hors-periode .bandeau-etiquette, .bandeau-sans-contrat .bandeau-etiquette { color: var(--gris); }
 
 .bouton-vert {
     display: inline-flex; align-items: center; gap: 10px; white-space: nowrap;
