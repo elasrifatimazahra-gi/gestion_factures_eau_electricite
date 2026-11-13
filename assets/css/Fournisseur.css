@@ -323,8 +323,10 @@ body {
 .clients-search .btn { border-radius: 999px; }
 
 .clients-actions { margin-bottom: 18px; }
-.clients-actions .btn { background: var(--green-600); }
+.clients-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.clients-actions .btn { background: var(--green-600); color: #fff; }
 .clients-actions .btn:hover { background: var(--green-700); }
+.clients-actions .btn.btn--primary { background: var(--green-900); }
 
 .clients-message {
   margin-bottom: 18px;
@@ -491,3 +493,17 @@ body {
 /* ---------- RTL (arabe, commun) ---------- */
 [dir="rtl"] .nav__link.is-active .nav__chevron { margin-left: 0; margin-right: auto; transform: scaleX(-1); }
 [dir="rtl"] .help-fab { right: auto; left: 20px; }
+
+/* Contrôle annuel */
+.filtre-statut {
+  padding: 8px 14px;
+  border: 1px solid var(--green-600);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--green-900);
+  font-weight: 600;
+  cursor: pointer;
+}
+.filtre-statut:focus { outline: 2px solid var(--green-700); outline-offset: 2px; }
+.btn--rejet { background: #b42318; color: #fff; }
+.btn--rejet:hover { background: #912018; }

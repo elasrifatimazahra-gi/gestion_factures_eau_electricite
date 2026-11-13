@@ -1,8 +1,7 @@
 <?php
 // Variables reçues du contrôleur : $facture, $client, $anterieuresImpayees, $penalitePct, $penaliteMin
 
-// Interrupteur : mettre à false pour masquer les boutons "Télécharger PDF" et "Imprimer"
-$afficherOutils = true;
+$afficherOutils = empty($GLOBALS['impressionAuto']);
 
 [$classeBadge, $libelleBadge] = facture_badge($facture);
 $statutsAr = ['payee' => 'مدفوعة', 'impayee' => 'غير مدفوعة', 'retard' => 'متأخرة',
@@ -93,7 +92,7 @@ $photos = [
                 <a class="retour" href="<?= BASE_URL ?>Facture/liste">&larr; Retour à mes factures</a>
                 <?php if ($afficherOutils): ?>
                 <div class="outils-droite">
-                    <button type="button" class="btn btn-plein" onclick="window.print()"><?= $ico('telecharger') ?> Télécharger PDF</button>
+                   <button type="button" class="btn btn-plein" onclick="window.print()"><?= $ico('telecharger') ?> Télécharger PDF</button>
                     <button type="button" class="btn btn-contour" onclick="window.print()"><?= $ico('imprimer') ?> Imprimer</button>
                 </div>
                 <?php endif; ?>
@@ -242,5 +241,8 @@ $photos = [
     </main>
 </div>
 
+<?php if (!empty($GLOBALS['impressionAuto'])): ?>
+<script>window.addEventListener('load', function () { window.print(); });</script>
+<?php endif; ?>
 </body>
 </html>

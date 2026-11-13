@@ -38,7 +38,7 @@ $menuFournisseur = [
     ['Paiements', '#', 'carte', ''],
     ['Coupures', '#', 'eclair', ''],
     ['Sanctions', '#', 'bouclier', ''],
-    ['Contrôle annuel', '#', 'calendrier', ''],
+    ['Contrôle annuel', BASE_URL . 'Controle/index', 'calendrier', 'Controle'],
     ['Paramètres', BASE_URL . 'Parametre/index', 'reglages', 'Parametre'],
     ['Journal', BASE_URL . 'Journal/index', 'journal', 'Journal'],
 ];

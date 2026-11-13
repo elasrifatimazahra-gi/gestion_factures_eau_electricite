@@ -4,6 +4,7 @@
 require_once ROOT . 'BD/Facture.php';
 require_once ROOT . 'BD/Tarif.php';
 require_once ROOT . 'BD/Parametre.php';
+require_once ROOT . 'BD/Controle.php';
 
 /**
  * Montant HT d'un fluide. Le prix de la tranche s'applique à TOUTE la consommation
@@ -46,6 +47,9 @@ function genererFacture($idConso)
     $tauxTva = (float) lireParametre('TVA_POURCENT', 18);
     $tva = round($ht * $tauxTva / 100, 2);
     $ttc = round($ht + $tva, 2);
+        // Crédit du client (sur-déclaration au contrôle annuel) : déduit de cette facture
+    $credit = min(bd_client_credit($c['id_client']), $ttc);
+    $aPayer = round($ttc - $credit, 2);
 
     // RG29 : échéance le 15 du mois suivant la période facturée
     $jour = (int) lireParametre('JOUR_ECHEANCE_FACTURE', 15);
@@ -53,7 +57,7 @@ function genererFacture($idConso)
     $annee = (int) $c['annee'];
     $echeance = date('Y-m-', strtotime(sprintf('%04d-%02d-01 +1 month', $annee, $mois))) . sprintf('%02d', $jour);
 
-    return bd_facture_creer([
+    $idFacture = bd_facture_creer([
         'numero_facture'        => bd_facture_numero($c['id_client'], $annee, $mois, $idContrat),
         'id_client'             => $c['id_client'],
         'id_contrat'            => $idContrat,
@@ -75,13 +79,22 @@ function genererFacture($idConso)
         'taux_tva'              => $tauxTva,
         'montant_tva'           => $tva,
         'montant_ttc'           => $ttc,
-        'montant_total_a_payer' => $ttc,
-        'reste_a_payer'         => $ttc,
-        'statut'                => 'IMPAYEE',
+        'credit_deduit'         => $credit,
+        'montant_total_a_payer' => $aPayer,
+        'reste_a_payer'         => $aPayer,
+        'statut'                => $aPayer > 0 ? 'IMPAYEE' : 'PAYEE',
         'photo_eau_facture'     => $c['photo_compteur_eau'],
         'photo_elec_facture'    => $c['photo_compteur_elec'],
     ]);
+
+    if ($idFacture && $credit > 0) {
+        bd_client_modifier_credit($c['id_client'], -$credit);
+    }
+    return $idFacture;
 }
+
+/**
+ * RG33 : pénalité de retard = 5 % du TTC, minimum 15 DH, appliquée une seule fois.
 
 /**
  * RG33 : pénalité de retard = 5 % du TTC, minimum 15 DH, appliquée une seule fois.

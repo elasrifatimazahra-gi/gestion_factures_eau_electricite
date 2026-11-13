@@ -34,7 +34,7 @@
                 <p class="saisie-alerte saisie-alerte-succes"><?= htmlspecialchars($succes) ?></p>
             <?php endif; ?>
 
-            <?php $ouvert = (int) date('j') >= 1; ?>
+            <?php $ouvert = (int) date('j') >= 18; ?>
             <section class="saisie-bandeau<?= $ouvert ? '' : ' ferme' ?>">
                 <?php if (!$contrats): ?>
                     <strong>Aucun contrat actif.</strong> Contactez votre fournisseur pour faire vérifier votre compte.

@@ -144,7 +144,7 @@ table.detail td.fort { font-weight: 700; }
 .f-fin { height: 3px; background: var(--vert-fonce); margin-top: 14px; }
 
 /* ----- Impression A4 portrait ----- */
-@page { size: A4 portrait; margin: 10mm; }
+@page { size: A4 portrait; margin: 8mm; }
 @media print {
     * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     body { background: #fff; font-size: 11px; }
@@ -157,6 +157,11 @@ table.detail td.fort { font-weight: 700; }
     .carte-info { min-height: 0; }
     .photo-cadre { aspect-ratio: auto; height: 34mm; }
     .infos, .bas, .photos, table.detail, .f-pied { break-inside: avoid; }
+        .trait { margin: 8px 0; }
+    .photos-entete { margin: 8px 0 6px; padding-top: 8px; break-after: avoid; }
+    .photo-cadre { aspect-ratio: auto; height: 24mm; }
+    .f-pied { margin-top: 8px; }
+    .f-fin { margin-top: 8px; }
 }
 
 @media (max-width: 900px) {
