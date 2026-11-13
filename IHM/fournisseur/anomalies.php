@@ -35,6 +35,7 @@ $mois = [
     <thead>
         <tr>
             <th>Client</th>
+            <th>Contrat</th>
             <th>Mois</th>
             <th>Type</th>
             <th>Statut</th>
@@ -71,6 +72,8 @@ $mois = [
                     ) ?>
                 </td>
 
+                <td><?= htmlspecialchars($a['numero_contrat'] ?? '—', ENT_QUOTES, 'UTF-8') ?></td>
+
                 <td>
                     <?= htmlspecialchars(
                         $nomMois . ' ' . $a['annee'],
@@ -106,7 +109,7 @@ $mois = [
 
         <?php if ($vide): ?>
             <tr>
-                <td class="vide" colspan="5">Aucune anomalie trouvée.</td>
+                <td class="vide" colspan="6">Aucune anomalie trouvée.</td>
             </tr>
         <?php endif; ?>
     </tbody>

@@ -204,6 +204,9 @@ $conseils = [
                     <?php elseif ($etatSaisie === 'DEJA_SAISI'): ?>
                         <span class="bandeau-etiquette"><span class="point-vert"></span> DÉCLARATION ENVOYÉE</span>
                         <strong>Vous avez déjà saisi vos index ce mois-ci. Merci !</strong>
+                    <?php elseif ($etatSaisie === 'SANS_CONTRAT'): ?>
+                        <span class="bandeau-etiquette">AUCUN CONTRAT ACTIF</span>
+                        <strong>Contactez votre fournisseur pour faire vérifier votre compte.</strong>
                     <?php else: ?>
                         <span class="bandeau-etiquette">DÉCLARATION FERMÉE</span>
                         <strong>Elle ouvre le 18 <?= $moisFr[$mois] ?></strong>

@@ -52,6 +52,7 @@ function genererFacture($idConso)
     return bd_facture_creer([
         'numero_facture'        => bd_facture_numero($c['id_client'], $annee, $mois),
         'id_client'             => $c['id_client'],
+        'id_contrat'            => $c['id_contrat'] ?? null,
         'id_conso'              => $c['id_conso'],
         'periode_mois'          => $mois,
         'periode_annee'         => $annee,

@@ -81,19 +81,21 @@ function bd_tableau_infos_utilisateur($idUtilisateur)
 /* ===================== ESPACE CLIENT ===================== */
 
 /**
- * Les $nb dernières consommations valides d'un client, de la plus ancienne à la plus récente
- * (pour la courbe « Votre consommation »).
+ * Les $nb derniers totaux mensuels valides d'un client, cumulés sur ses contrats.
  */
 function bd_tableau_consommations_client($idClient, $nb = 6)
 {
     $link = Connexion();
     $idClient = (int) $idClient;
     $nb = (int) $nb;
-    $res = mysqli_query($link, "SELECT annee, mois, conso_eau, conso_elec
+    $res = mysqli_query($link, "SELECT annee, mois,
+                                       SUM(conso_eau) AS conso_eau,
+                                       SUM(conso_elec) AS conso_elec
                                 FROM consommations
                                 WHERE id_client = $idClient
                                   AND statut IN ('VALIDE', 'REGULARISEE')
                                   AND conso_eau >= 0 AND conso_elec >= 0
+                                GROUP BY annee, mois
                                 ORDER BY annee DESC, mois DESC
                                 LIMIT $nb");
     $lignes = $res ? mysqli_fetch_all($res, MYSQLI_ASSOC) : [];

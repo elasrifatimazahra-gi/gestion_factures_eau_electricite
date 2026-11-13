@@ -4,7 +4,7 @@ include_once "Connexion.php";
 function bd_utilisateur_trouver($login,$role)
 {
        $link=Connexion();
-       $colonne = ($role === 'CLIENT') ? 'identifiant' : 'email';
+       $colonne = in_array($role, ['CLIENT', 'AGENT'], true) ? 'identifiant' : 'email';
        $sql= "SELECT *,
                (bloque_jusqu_a IS NOT NULL AND bloque_jusqu_a > NOW()) AS est_bloque
         FROM utilisateurs
@@ -61,6 +61,30 @@ function bd_utilisateur_id_client($id_utilisateur)
     $res = mysqli_query($link, $sql);
     $ligne = mysqli_fetch_assoc($res);
     return $ligne ? (int) $ligne['id_client'] : null;
+}
+
+function bd_utilisateur_id_agent($id_utilisateur)
+{
+    $link = Connexion();
+    $id_utilisateur = (int) $id_utilisateur;
+    $stmt = mysqli_prepare(
+        $link,
+        "SELECT id_agent FROM agents WHERE id_utilisateur = ? AND actif = 1"
+    );
+    if (!$stmt) {
+        throw new RuntimeException("Impossible de préparer la recherche de l’agent : " . mysqli_error($link));
+    }
+    mysqli_stmt_bind_param($stmt, 'i', $id_utilisateur);
+    if (!mysqli_stmt_execute($stmt)) {
+        $erreur = mysqli_stmt_error($stmt);
+        mysqli_stmt_close($stmt);
+        throw new RuntimeException("Impossible de récupérer l’agent : " . $erreur);
+    }
+    $resultat = mysqli_stmt_get_result($stmt);
+    $ligne = mysqli_fetch_assoc($resultat);
+    mysqli_stmt_close($stmt);
+
+    return $ligne ? (int) $ligne['id_agent'] : null;
 }
 
 // Creer un nouvel utilisateur et retourne son ID

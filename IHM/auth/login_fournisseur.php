@@ -57,6 +57,7 @@
 
             <div class="auth-pied">
                 <a class="auth-lien" href="<?= BASE_URL ?>Auth/login_client" style="margin-top:0">Retour à l’espace client</a>
+                <a class="auth-lien" href="<?= BASE_URL ?>Auth/login_agent" style="margin-top:8px">Connexion agent</a>
             </div>
         </div>
     </section>

@@ -112,6 +112,8 @@ function listerAnomalies($statut = null)
             a.date_traitement,
             c.mois,
             c.annee,
+            c.id_contrat,
+            ct.numero_contrat,
             cl.numero_client,
             cl.nom,
             cl.prenom
@@ -120,6 +122,8 @@ function listerAnomalies($statut = null)
             ON c.id_conso = a.id_conso
         JOIN clients cl
             ON cl.id_client = a.id_client
+        LEFT JOIN contrats ct
+            ON ct.id_contrat = c.id_contrat
     ";
 
     if ($statut !== null && $statut !== '') {
@@ -176,6 +180,8 @@ function trouverAnomalieParId($id)
             a.conso_elec_rectifiee,
             c.mois,
             c.annee,
+            c.id_contrat,
+            ct.numero_contrat,
             c.index_eau_precedent,
             c.index_eau_nouveau AS index_eau,
             c.index_elec_precedent,
@@ -193,6 +199,8 @@ function trouverAnomalieParId($id)
             ON c.id_conso = a.id_conso
         JOIN clients cl
             ON cl.id_client = a.id_client
+        LEFT JOIN contrats ct
+            ON ct.id_contrat = c.id_contrat
         WHERE a.id_anomalie = ?"
     );
 
@@ -237,7 +245,7 @@ function marquerAnomalieTraitee($id)
  * S'il n'existe aucun historique, on utilise les index initiaux
  * enregistrés dans la table clients.
  */
-function trouverIndexPrecedent($idClient, $mois, $annee)
+function trouverIndexPrecedent($idClient, $mois, $annee, $idContrat = null)
 {
     $link = Connexion();
 
@@ -245,26 +253,23 @@ function trouverIndexPrecedent($idClient, $mois, $annee)
     $mois = (int) $mois;
     $annee = (int) $annee;
 
+    $filtre = $idContrat !== null ? 'id_contrat' : 'id_client';
+    $idFiltre = $idContrat !== null ? (int) $idContrat : $idClient;
     $sql = mysqli_prepare(
         $link,
-        "SELECT
-            index_eau_nouveau,
-            index_elec_nouveau
+        "SELECT index_eau_nouveau, index_elec_nouveau
          FROM consommations
-         WHERE id_client = ?
+         WHERE $filtre = ?
            AND statut IN ('VALIDE', 'REGULARISEE')
-           AND (
-                annee < ?
-                OR (annee = ? AND mois < ?)
-           )
-         ORDER BY annee DESC, mois DESC
+           AND (annee < ? OR (annee = ? AND mois < ?))
+         ORDER BY annee DESC, mois DESC, id_conso DESC
          LIMIT 1"
     );
 
     mysqli_stmt_bind_param(
         $sql,
         "iiii",
-        $idClient,
+        $idFiltre,
         $annee,
         $annee,
         $mois
@@ -284,14 +289,14 @@ function trouverIndexPrecedent($idClient, $mois, $annee)
         ];
     }
 
+    $table = $idContrat !== null ? 'contrats' : 'clients';
+    $idColonne = $idContrat !== null ? 'id_contrat' : 'id_client';
     $sql = mysqli_prepare(
         $link,
-        "SELECT index_initial_eau, index_initial_elec
-         FROM clients
-         WHERE id_client = ?"
+        "SELECT index_initial_eau, index_initial_elec FROM $table WHERE $idColonne = ?"
     );
 
-    mysqli_stmt_bind_param($sql, "i", $idClient);
+    mysqli_stmt_bind_param($sql, "i", $idFiltre);
     mysqli_stmt_execute($sql);
 
     $resultat = mysqli_stmt_get_result($sql);

@@ -41,6 +41,13 @@ function Auth_login_fournisseur($param = null)
     include ROOT . 'IHM/auth/login_fournisseur.php';
 }
 
+function Auth_login_agent($param = null)
+{
+    $erreur = $_SESSION['erreur_login'] ?? null;
+    unset($_SESSION['erreur_login']);
+    include ROOT . 'IHM/auth/login_agent.php';
+}
+
 function Auth_connecter($param = null)
 {
     // 1. La demande doit venir du formulaire (POST)
@@ -49,8 +56,15 @@ function Auth_connecter($param = null)
     }
 
     // 2. Lire ce que l'utilisateur a envoyé
-    $role  = (($_POST['role'] ?? '') === 'FOURNISSEUR') ? 'FOURNISSEUR' : 'CLIENT';
-    $page  = ($role === 'CLIENT') ? 'Auth/login_client' : 'Auth/login_fournisseur';
+    $role = $_POST['role'] ?? '';
+    if (!in_array($role, ['CLIENT', 'FOURNISSEUR', 'AGENT'], true)) {
+        $role = 'CLIENT';
+    }
+    $page = [
+        'CLIENT' => 'Auth/login_client',
+        'FOURNISSEUR' => 'Auth/login_fournisseur',
+        'AGENT' => 'Auth/login_agent',
+    ][$role];
     $login = trim($_POST['login'] ?? '');
     $mdp   = $_POST['mot_de_passe'] ?? '';
 
@@ -93,6 +107,15 @@ function Auth_connecter($param = null)
         rediriger($page);
     }
 
+    $idAgent = null;
+    if ($role === 'AGENT') {
+        $idAgent = bd_utilisateur_id_agent((int) $user['id_utilisateur']);
+        if ($idAgent === null) {
+            $_SESSION['erreur_login'] = "Ce compte n’est lié à aucun agent actif.";
+            rediriger($page);
+        }
+    }
+
     // 8. Tout est bon : on connecte l'utilisateur
     session_regenerate_id(true);
     bd_utilisateur_reset($user['id_utilisateur']);
@@ -102,6 +125,8 @@ function Auth_connecter($param = null)
 
     if ($user['role'] === 'CLIENT') {
         $_SESSION['id_client'] = bd_utilisateur_id_client($user['id_utilisateur']);
+    } elseif ($user['role'] === 'AGENT') {
+        $_SESSION['id_agent'] = $idAgent;
     }
     rediriger('Auth/accueil');
 }
@@ -122,6 +147,12 @@ function Auth_accueil($param = null)
         $infosFournisseur  = bd_tableau_infos_utilisateur($_SESSION['id_utilisateur']) ?: [];
  
         include ROOT . 'IHM/fournisseur/accueil.php';
+        return;
+    }
+
+    if ($_SESSION['role'] === 'AGENT') {
+        require_once ROOT . 'Traitement/Agent.php';
+        Agent_accueil();
         return;
     }
  
@@ -164,7 +195,10 @@ function auth_donnees_accueil_client($idClient)
     $jour  = (int) date('j');
     $mois  = (int) date('n');
     $annee = (int) date('Y');
-    if (saisieExiste($idClient, $mois, $annee)) {
+    $contratsActifs = bd_consommation_contrats_client($idClient);
+    if (!$contratsActifs) {
+        $etatSaisie = 'SANS_CONTRAT';
+    } elseif (bd_consommation_client_saisies_manquantes($idClient, $mois, $annee) === 0) {
         $etatSaisie = 'DEJA_SAISI';
     } elseif ($jour < 18) {
         $etatSaisie = 'HORS_PERIODE';
@@ -215,12 +249,19 @@ function Auth_logout($param = null)
     $role = $_SESSION['role'] ?? 'CLIENT';
     $_SESSION = [];
     session_destroy();
-    rediriger($role === 'FOURNISSEUR' ? 'Auth/login_fournisseur' : 'Auth/login_client');
+    $page = [
+        'FOURNISSEUR' => 'Auth/login_fournisseur',
+        'AGENT' => 'Auth/login_agent',
+    ][$role] ?? 'Auth/login_client';
+    rediriger($page);
 }
 
 function exiger_role($role)
 {
-    $page = ($role === 'FOURNISSEUR') ? 'Auth/login_fournisseur' : 'Auth/login_client';
+    $page = [
+        'FOURNISSEUR' => 'Auth/login_fournisseur',
+        'AGENT' => 'Auth/login_agent',
+    ][$role] ?? 'Auth/login_client';
 
     // 1. Connecté ?
     if (!isset($_SESSION['id_utilisateur'])) {
@@ -229,7 +270,7 @@ function exiger_role($role)
 
     // 2. Session expirée ?
     if (time() - ($_SESSION['derniere_activite'] ?? 0) > MINUTES_INACTIVITE * 60) {
-        unset($_SESSION['id_utilisateur'], $_SESSION['role'], $_SESSION['derniere_activite'], $_SESSION['id_client']);
+        unset($_SESSION['id_utilisateur'], $_SESSION['role'], $_SESSION['derniere_activite'], $_SESSION['id_client'], $_SESSION['id_agent']);
         $_SESSION['erreur_login'] = "Session expirée, veuillez vous reconnecter.";
         rediriger($page);
     }

@@ -32,6 +32,7 @@ $menuFournisseur = [
     ['Clients', BASE_URL . 'Client/index', 'clients', 'Client'],
     ['Quartiers', BASE_URL . 'Quartier/index', 'calendrier', 'Quartier'],
     ['Agents', BASE_URL . 'Agent/index', 'clients', 'Agent'],
+    ['Import annuel', BASE_URL . 'Import/index', 'journal', 'Import'],
     ['Anomalies', BASE_URL . 'Anomalie/index', 'anomalie', 'Anomalie'],
     ['Réclamations', '#', 'message', ''],
     ['Paiements', '#', 'carte', ''],

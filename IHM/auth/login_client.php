@@ -56,6 +56,7 @@
             <p class="auth-pied">Pas encore client ? <strong>Rendez-vous dans votre agence.</strong></p>
             <div style="text-align:center">
                 <a class="auth-lien" href="<?= BASE_URL ?>Auth/login_fournisseur">Connexion fournisseur</a>
+                <a class="auth-lien" href="<?= BASE_URL ?>Auth/login_agent">Connexion agent</a>
             </div>
             <div class="auth-copyright">© <?= date('Y') ?> Amanor · Aide et confidentialité</div>
         </div>

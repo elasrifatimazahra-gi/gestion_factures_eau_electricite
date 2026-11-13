@@ -16,6 +16,9 @@ $indexElecPrec = (float) $a['index_elec_precedent'];
 <section class="dash-carte anomalie-detail-card">
     <h2>Anomalie : <?= htmlspecialchars(trim($a['prenom'] . ' ' . $a['nom'])) ?></h2>
     <p><strong>Client :</strong> <?= htmlspecialchars($a['numero_client']) ?></p>
+    <?php if (!empty($a['numero_contrat'])): ?>
+        <p><strong>Contrat :</strong> <?= htmlspecialchars($a['numero_contrat']) ?></p>
+    <?php endif; ?>
     <p><strong>Type :</strong> <?= htmlspecialchars($a['type']) ?></p>
     <p><strong>Période :</strong> <?= (int) $a['mois'] ?>/<?= (int) $a['annee'] ?></p>
     <p><strong>Statut :</strong> <?= htmlspecialchars(STATUTS_ANOMALIE_LIBELLES[$a['statut']] ?? $a['statut']) ?></p>

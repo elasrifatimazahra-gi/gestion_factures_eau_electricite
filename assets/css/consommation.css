@@ -38,6 +38,50 @@
     border: 1px solid #b7e0c8;
 }
 
+.saisie-contrat {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 20px 0;
+}
+
+.saisie-contrat label {
+    display: grid;
+    gap: 7px;
+    color: #52625b;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.saisie-contrat select {
+    min-width: min(320px, 72vw);
+    min-height: 42px;
+    padding: 8px 12px;
+    border: 1px solid #dfe7e2;
+    border-radius: 9px;
+    background: #fff;
+    font: inherit;
+}
+
+.saisie-contrat button {
+    min-height: 42px;
+    padding: 9px 16px;
+    border: 0;
+    border-radius: 9px;
+    color: #fff;
+    background: var(--vert-sombre);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.saisie-contrat-selectionne {
+    margin: 12px 0 18px;
+    color: #52625b;
+    font-size: 13px;
+}
+
 /* ----- Grille des deux cartes ----- */
 .saisie-grille {
     display: grid;
