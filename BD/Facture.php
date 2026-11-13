@@ -26,8 +26,7 @@ function bd_facture_numero_existe($numero)
     return $res && mysqli_num_rows($res) > 0;
 }
 
-/** Ex. : FAC-2026-09-000101 (année, mois, fin du numéro client) */
-function bd_facture_numero($idClient, $annee, $mois)
+function bd_facture_numero($idClient, $annee, $mois, $idContrat = null)
 {
     $link = Connexion();
     $idClient = (int) $idClient;
@@ -37,6 +36,9 @@ function bd_facture_numero($idClient, $annee, $mois)
 
     $base = sprintf('FAC-%04d-%02d-%s', $annee, $mois, $suffixe);
     $numero = $base;
+    if ($idContrat && bd_facture_numero_existe($numero)) {
+        $numero = $base . '-C' . (int) $idContrat;
+    }
     $i = 2;
     while (bd_facture_numero_existe($numero)) {
         $numero = $base . '-' . $i;
@@ -75,26 +77,59 @@ function bd_facture_du_client($idClient)
     return $res ? mysqli_fetch_all($res, MYSQLI_ASSOC) : [];
 }
 
-/** Une facture, seulement si elle appartient bien à ce client. */
-function bd_facture_detail($idFacture, $idClient)
+/**
+ * Factures d'UN contrat, avec son quartier et son type d'activité.
+ * Le contrat doit appartenir au client (sinon : liste vide).
+ */
+function bd_facture_du_contrat($idContrat, $idClient)
+{
+    $link = Connexion();
+    $idContrat = (int) $idContrat;
+    $idClient = (int) $idClient;
+    $res = mysqli_query($link, "SELECT f.*, ct.numero_contrat, q.nom AS quartier, ta.libelle AS type_activite
+                                FROM factures f
+                                JOIN contrats ct ON ct.id_contrat = f.id_contrat
+                                LEFT JOIN quartiers q ON q.id_quartier = ct.id_quartier
+                                LEFT JOIN types_activite ta ON ta.id_type_activite = q.id_type_activite
+                                WHERE f.id_contrat = $idContrat AND ct.id_client = $idClient
+                                ORDER BY f.periode_annee DESC, f.periode_mois DESC, f.id_facture DESC");
+    return $res ? mysqli_fetch_all($res, MYSQLI_ASSOC) : [];
+}
+
+/**
+ * Une facture, seulement si elle appartient bien à ce client (et, si $idContrat
+ * est donné, à ce contrat). Renvoie aussi le contrat, le quartier et le type d'activité.
+ */
+function bd_facture_detail($idFacture, $idClient, $idContrat = null)
 {
     $link = Connexion();
     $idFacture = (int) $idFacture;
     $idClient = (int) $idClient;
-    $res = mysqli_query($link, "SELECT * FROM factures
-                                WHERE id_facture = $idFacture AND id_client = $idClient");
+    $filtreContrat = $idContrat ? ' AND f.id_contrat = ' . (int) $idContrat : '';
+    $res = mysqli_query($link, "SELECT f.*, ct.numero_contrat, ct.numero_compteur_eau, ct.numero_compteur_elec,
+                                       q.nom AS quartier, ta.libelle AS type_activite
+                                FROM factures f
+                                LEFT JOIN contrats ct ON ct.id_contrat = f.id_contrat
+                                LEFT JOIN quartiers q ON q.id_quartier = ct.id_quartier
+                                LEFT JOIN types_activite ta ON ta.id_type_activite = q.id_type_activite
+                                WHERE f.id_facture = $idFacture AND f.id_client = $idClient$filtreContrat");
     return $res ? mysqli_fetch_assoc($res) : null;
 }
 
 /** Nombre de factures non payées d'une période antérieure à (annee, mois). */
-function bd_facture_nb_impayees_anterieures($idClient, $annee, $mois)
+/**
+ * Nombre de factures non payées d'une période antérieure à (annee, mois).
+ * Avec $idContrat : on ne regarde que ce contrat (paiement chronologique par contrat).
+ */
+function bd_facture_nb_impayees_anterieures($idClient, $annee, $mois, $idContrat = null)
 {
     $link = Connexion();
     $idClient = (int) $idClient;
     $annee = (int) $annee;
     $mois = (int) $mois;
+    $filtreContrat = $idContrat ? ' AND id_contrat = ' . (int) $idContrat : '';
     $res = mysqli_query($link, "SELECT COUNT(*) AS nb FROM factures
-                                WHERE id_client = $idClient
+                                WHERE id_client = $idClient$filtreContrat
                                   AND statut IN ('IMPAYEE', 'EN_RETARD')
                                   AND (periode_annee < $annee OR (periode_annee = $annee AND periode_mois < $mois))");
     $row = $res ? mysqli_fetch_assoc($res) : null;
@@ -134,4 +169,31 @@ function bd_facture_infos_client($idClient)
     $res = mysqli_query($link, "SELECT nom, prenom, numero_client, adresse, numero_compteur_eau, numero_compteur_elec
                                 FROM clients WHERE id_client = $idClient");
     return $res ? mysqli_fetch_assoc($res) : null;
+}
+
+/** Identité du client + infos du contrat choisi (compteurs, quartier, type d'activité). */
+function bd_facture_infos_contrat($idContrat, $idClient)
+{
+    $link = Connexion();
+    $idContrat = (int) $idContrat;
+    $idClient = (int) $idClient;
+    $res = mysqli_query($link, "SELECT cl.nom, cl.prenom, cl.numero_client, cl.adresse,
+                                       ct.numero_contrat, ct.numero_compteur_eau, ct.numero_compteur_elec,
+                                       q.nom AS quartier, ta.libelle AS type_activite
+                                FROM contrats ct
+                                JOIN clients cl ON cl.id_client = ct.id_client
+                                LEFT JOIN quartiers q ON q.id_quartier = ct.id_quartier
+                                LEFT JOIN types_activite ta ON ta.id_type_activite = q.id_type_activite
+                                WHERE ct.id_contrat = $idContrat AND ct.id_client = $idClient");
+    return $res ? mysqli_fetch_assoc($res) : null;
+}
+
+// Premier contrat d'un client 
+function bd_facture_premier_contrat($idClient)
+{
+    $link = Connexion();
+    $idClient = (int) $idClient;
+    $res = mysqli_query($link, "SELECT id_contrat FROM contrats WHERE id_client = $idClient ORDER BY id_contrat LIMIT 1");
+    $row = $res ? mysqli_fetch_assoc($res) : null;
+    return $row ? (int) $row['id_contrat'] : null;
 }

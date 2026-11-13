@@ -25,6 +25,21 @@ function facture_nom_mois($mois)
     return $noms[(int) $mois] ?? '';
 }
 
+/**
+ * Contrat dont on affiche les factures : celui choisi à la connexion ($_SESSION['id_contrat']).
+ * On vérifie qu'il appartient bien au client connecté.
+ * Secours (tant que le choix du contrat n'est pas en place) : le premier contrat du client.
+ * Retourne null si le client n'a aucun contrat.
+ */
+function facture_contrat_courant($idClient)
+{
+    $idContrat = (int) ($_SESSION['id_contrat'] ?? 0);
+    if ($idContrat > 0 && bd_facture_infos_contrat($idContrat, $idClient)) {
+        return $idContrat;
+    }
+    return bd_facture_premier_contrat($idClient);
+}
+
 function facture_libelle_statut($statut)
 {
     $libelles = ['IMPAYEE' => 'Impayée', 'EN_RETARD' => 'En retard',
@@ -115,8 +130,14 @@ function Facture_liste($param = null)
     $idClient = facture_client_connecte();
 
     appliquerPenalites();                     // met à jour les retards avant l'affichage
-    $factures = bd_facture_du_client($idClient);
-    $client = bd_facture_infos_client($idClient);
+    $idContrat = facture_contrat_courant($idClient);
+    if ($idContrat) {
+        $factures = bd_facture_du_contrat($idContrat, $idClient);
+        $client = bd_facture_infos_contrat($idContrat, $idClient);
+    } else {                                  // client sans contrat : ancien comportement
+        $factures = bd_facture_du_client($idClient);
+        $client = bd_facture_infos_client($idClient);
+    }
     $notificationsNonLues = bd_notification_compter_non_lues((int) $_SESSION['id_utilisateur']);
 
     include ROOT . 'IHM/client/factures.php';
@@ -129,7 +150,8 @@ function Facture_detail($param = null)
     $idFacture = is_array($param) ? (int) ($param[0] ?? 0) : (int) $param;
 
     appliquerPenalites();
-    $facture = bd_facture_detail($idFacture, $idClient);
+    $idContrat = facture_contrat_courant($idClient);
+    $facture = bd_facture_detail($idFacture, $idClient, $idContrat);
     if (!$facture) {
         http_response_code(404);
         include ROOT . 'IHM/404.php';
@@ -139,12 +161,12 @@ function Facture_detail($param = null)
     // Des factures plus anciennes sont-elles encore à payer ?
     $anterieuresImpayees = 0;
     if (in_array($facture['statut'], ['IMPAYEE', 'EN_RETARD'], true)) {
-        $anterieuresImpayees = bd_facture_nb_impayees_anterieures(
-            $idClient, $facture['periode_annee'], $facture['periode_mois']
+               $anterieuresImpayees = bd_facture_nb_impayees_anterieures(
+            $idClient, $facture['periode_annee'], $facture['periode_mois'], $idContrat
         );
     }
 
-    $client = bd_facture_infos_client($idClient);
+    $client = $idContrat ? bd_facture_infos_contrat($idContrat, $idClient) : bd_facture_infos_client($idClient);
     $penalitePct = (float) lireParametre('PENALITE_RETARD_POURCENT', 5);
     $penaliteMin = (float) lireParametre('PENALITE_RETARD_MINIMUM_DH', 15);
 

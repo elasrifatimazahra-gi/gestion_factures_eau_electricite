@@ -11,10 +11,10 @@ require_once ROOT . 'BD/Parametre.php';
  *   9 m3 d'eau   -> 9 x 7.39    = 66.51
  *   134 kWh elec -> 134 x 0.92  = 123.28
  */
-function calculerMontantFluide($typeFluide, $conso)
+function calculerMontantFluide($typeFluide, $conso, $idTypeActivite = null)
 {
     $conso = (int) $conso;
-    $tarif = bd_tarif_pour_conso($typeFluide, $conso);
+    $tarif = bd_tarif_pour_conso($typeFluide, $conso, $idTypeActivite);
     if (!$tarif) {
         return 0.0;
     }
@@ -35,8 +35,12 @@ function genererFacture($idConso)
         return false;
     }
 
-    $htEau = calculerMontantFluide('EAU', $c['conso_eau']);
-    $htElec = calculerMontantFluide('ELECTRICITE', $c['conso_elec']);
+        // Le contrat de la consommation donne le quartier, donc le type d'activité, donc la grille
+    $idContrat = !empty($c['id_contrat']) ? (int) $c['id_contrat'] : null;
+    $idType = $idContrat ? bd_tarif_type_du_contrat($idContrat) : null;
+
+    $htEau = calculerMontantFluide('EAU', $c['conso_eau'], $idType);
+    $htElec = calculerMontantFluide('ELECTRICITE', $c['conso_elec'], $idType);
     $ht = round($htEau + $htElec, 2);
 
     $tauxTva = (float) lireParametre('TVA_POURCENT', 18);
@@ -50,8 +54,9 @@ function genererFacture($idConso)
     $echeance = date('Y-m-', strtotime(sprintf('%04d-%02d-01 +1 month', $annee, $mois))) . sprintf('%02d', $jour);
 
     return bd_facture_creer([
-        'numero_facture'        => bd_facture_numero($c['id_client'], $annee, $mois),
+        'numero_facture'        => bd_facture_numero($c['id_client'], $annee, $mois, $idContrat),
         'id_client'             => $c['id_client'],
+        'id_contrat'            => $idContrat,
         'id_conso'              => $c['id_conso'],
         'periode_mois'          => $mois,
         'periode_annee'         => $annee,

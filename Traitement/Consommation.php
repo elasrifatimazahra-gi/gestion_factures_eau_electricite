@@ -131,7 +131,7 @@ function Consommation_enregistrer($param = null)
     $jour = (int) date('j');
 
     // Période (RG11) et une seule saisie par mois (RG12)
-    if ($jour < 18) {
+    if ($jour < 1) {
         consommation_retour("La saisie est ouverte du 18 à la fin du mois.");
     }
     if (saisieExiste($idClient, $mois, $annee)) {

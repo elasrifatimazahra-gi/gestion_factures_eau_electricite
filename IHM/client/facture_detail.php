@@ -138,6 +138,11 @@ $photos = [
                         <div class="sous-texte"><?= nl2br(htmlspecialchars($client['adresse'] ?? '')) ?></div>
                         <div class="lignes">
                             <div class="ligne"><span>N° client</span><b><?= htmlspecialchars($client['numero_client'] ?? '') ?></b></div>
+                                <?php if (!empty($facture['numero_contrat'])): ?>
+                                <div class="ligne"><span>N° contrat</span><b><?= htmlspecialchars($facture['numero_contrat']) ?></b></div>
+                                <div class="ligne"><span>Quartier</span><b><?= htmlspecialchars($facture['quartier'] ?? 'Non renseigné') ?></b></div>
+                                <div class="ligne"><span>Type d'activité</span><b><?= htmlspecialchars($facture['type_activite'] ?? 'Résidentiel (par défaut)') ?></b></div>
+                            <?php endif; ?>
                             <div class="ligne"><span>Compteur eau</span><b><?= htmlspecialchars($client['numero_compteur_eau'] ?? '') ?></b></div>
                             <div class="ligne"><span>Compteur électricité</span><b><?= htmlspecialchars($client['numero_compteur_elec'] ?? '') ?></b></div>
                         </div>

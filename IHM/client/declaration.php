@@ -34,7 +34,7 @@
                 <p class="saisie-alerte saisie-alerte-succes"><?= htmlspecialchars($succes) ?></p>
             <?php endif; ?>
 
-            <?php $ouvert = (int) date('j') >= 18; ?>
+            <?php $ouvert = (int) date('j') >= 1; ?>
             <section class="saisie-bandeau<?= $ouvert ? '' : ' ferme' ?>">
                 <?php if ($ouvert): ?>
                     <strong>Période ouverte.</strong> Une seule déclaration est autorisée par mois.

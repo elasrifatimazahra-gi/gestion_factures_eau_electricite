@@ -89,7 +89,13 @@ $menu = [
         <main class="contenu">
             <h1>Mes factures</h1>
             <p class="sous-titre">Consultez, téléchargez et réglez vos factures.</p>
-
+            <?php if (!empty($client['numero_contrat'])): ?>
+                <p class="sous-titre">
+                    Contrat <b><?= htmlspecialchars($client['numero_contrat']) ?></b>
+                    · Quartier : <?= htmlspecialchars($client['quartier'] ?? 'non renseigné') ?>
+                    · Activité : <?= htmlspecialchars($client['type_activite'] ?? 'Résidentiel (par défaut)') ?>
+                </p>
+            <?php endif; ?>
             <div class="onglets">
                 <button type="button" class="onglet actif" data-filtre="toutes">Toutes</button>
                 <button type="button" class="onglet" data-filtre="impayees">Impayées</button>
