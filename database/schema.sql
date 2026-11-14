@@ -1,3 +1,9 @@
+-- =============================================================================
+-- BASE COMPLÈTE gestion_factures_tp2
+-- Fusion de : schema.sql + migration_contrat.sql + migration_agent_controle.sql
+-- Toutes les migrations sont déjà intégrées dans les CREATE TABLE ci-dessous.
+-- Exécution unique sur base vide (ou réinitialisation complète : DROP inclus).
+-- =============================================================================
 CREATE DATABASE IF NOT EXISTS `gestion_factures_tp2`
 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -338,7 +344,6 @@ CREATE TABLE `controle_annuel` (
     `id_facture_regularisation` INT NULL,
     `observations` TEXT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    KEY `idx_controle_client` (`id_client`),
     UNIQUE KEY `unique_contrat_annee_controle` (`id_contrat`, `annee`),
     FOREIGN KEY (`id_client`) REFERENCES `clients`(`id_client`) ON DELETE CASCADE,
     CONSTRAINT `fk_controle_contrat`
@@ -550,3 +555,12 @@ INSERT INTO `factures` (`id_facture`, `numero_facture`, `id_client`, `id_contrat
 
 INSERT INTO `journal_actions` (`id_utilisateur`, `action_type`, `table_concernee`, `id_entite`, `description`, `adresse_ip`) VALUES
 (1, 'INITIALISATION_SYSTEME', 'parametres', 1, 'Initialisation du schema de la base de donnees', '127.0.0.1');
+
+-- Notification de bienvenue (issue de migration_contrat.sql)
+INSERT INTO `notifications` (`id_utilisateur`, `titre`, `message`, `type`)
+SELECT u.`id_utilisateur`,
+       'Bienvenue dans votre espace client',
+       'Votre espace client Amanor est prêt. Vous recevrez ici les informations concernant vos factures et votre compte.',
+       'INFO'
+FROM `utilisateurs` u
+WHERE u.`identifiant` = 'CLT-2026-000101';
