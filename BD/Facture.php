@@ -197,3 +197,48 @@ function bd_facture_premier_contrat($idClient)
     $row = $res ? mysqli_fetch_assoc($res) : null;
     return $row ? (int) $row['id_contrat'] : null;
 }
+
+/** Contrats actifs sans aucune saisie pour ce mois : ce sont ceux qu'on estime (RG17). */
+function bd_facture_contrats_a_estimer($annee, $mois)
+{
+    $link = Connexion();
+    $annee = (int) $annee;
+    $mois = (int) $mois;
+    $debutMois = sprintf('%04d-%02d-01', $annee, $mois);
+    $res = mysqli_query($link, "SELECT ct.id_contrat, ct.id_client
+                                FROM contrats ct
+                                WHERE ct.statut = 'ACTIF'
+                                  AND DATE(ct.created_at) <= LAST_DAY('$debutMois')
+                                  AND NOT EXISTS (SELECT 1 FROM consommations co
+                                                  WHERE co.id_contrat = ct.id_contrat
+                                                    AND co.annee = $annee AND co.mois = $mois)");
+    return $res ? mysqli_fetch_all($res, MYSQLI_ASSOC) : [];
+}
+
+/**
+ * Consommation mensuelle moyenne d'un contrat avant (annee, mois), eau et électricité.
+ * Total des relevés réels / nombre de mois couverts (estimations comprises, car elles
+ * occupent un mois sans faire avancer l'index). Retourne null sans historique réel.
+ */
+function bd_facture_moyenne_contrat($idContrat, $annee, $mois)
+{
+    $link = Connexion();
+    $idContrat = (int) $idContrat;
+    $ref = (int) $annee * 12 + (int) $mois;
+    $res = mysqli_query($link, "SELECT SUM(CASE WHEN type_saisie <> 'ESTIMEE' THEN conso_eau ELSE 0 END) AS eau,
+                                       SUM(CASE WHEN type_saisie <> 'ESTIMEE' THEN conso_elec ELSE 0 END) AS elec,
+                                       COUNT(*) AS nb_mois
+                                FROM consommations
+                                WHERE id_contrat = $idContrat
+                                  AND statut IN ('VALIDE', 'REGULARISEE')
+                                  AND annee * 12 + mois <= (SELECT MAX(annee * 12 + mois) FROM consommations
+                                                            WHERE id_contrat = $idContrat
+                                                              AND type_saisie <> 'ESTIMEE'
+                                                              AND statut IN ('VALIDE', 'REGULARISEE')
+                                                              AND annee * 12 + mois < $ref)");
+    $row = $res ? mysqli_fetch_assoc($res) : null;
+    if (!$row || (int) $row['nb_mois'] === 0) {
+        return null;
+    }
+    return ['eau' => (int) round($row['eau'] / $row['nb_mois']), 'elec' => (int) round($row['elec'] / $row['nb_mois'])];
+}

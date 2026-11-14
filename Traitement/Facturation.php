@@ -5,6 +5,8 @@ require_once ROOT . 'BD/Facture.php';
 require_once ROOT . 'BD/Tarif.php';
 require_once ROOT . 'BD/Parametre.php';
 require_once ROOT . 'BD/Controle.php';
+require_once ROOT . 'BD/Consommation.php';   // enregistrer(), index précédent
+require_once ROOT . 'BD/Journal.php';
 
 /**
  * Montant HT d'un fluide. Le prix de la tranche s'applique à TOUTE la consommation
@@ -66,7 +68,7 @@ function genererFacture($idConso)
         'periode_annee'         => $annee,
         'date_emission'         => date('Y-m-d'),
         'date_echeance'         => $echeance,
-        'type_facture'          => 'MENSUELLE',
+        'type_facture'          => ($c['type_saisie'] === 'ESTIMEE') ? 'ESTIMEE' : 'MENSUELLE',
         'index_eau_debut'       => $c['index_eau_precedent'],
         'index_eau_fin'         => $c['index_eau_nouveau'],
         'conso_eau'             => $c['conso_eau'],
@@ -112,3 +114,65 @@ function appliquerPenalites()
     }
     return $nb;
 }
+
+/* ------------------------------------------------------------------
+ *  Facture estimée (RG17, RG18)
+ * ------------------------------------------------------------------ */
+
+/**
+ * Consommation estimée d'un contrat : moyenne de son historique réel (eau et électricité
+ * séparément), ou valeur par défaut des paramètres s'il n'a aucun historique.
+ * Retourne [conso_eau, conso_elec].
+ */
+function facturation_estimer_conso($idContrat, $annee, $mois)
+{
+    $moyenne = bd_facture_moyenne_contrat($idContrat, $annee, $mois);
+    if ($moyenne) {
+        return [$moyenne['eau'], $moyenne['elec']];
+    }
+    return [
+        (int) lireParametre('ESTIMATION_DEFAUT_EAU_M3', 10),
+        (int) lireParametre('ESTIMATION_DEFAUT_ELEC_KWH', 150),
+    ];
+}
+
+/**
+ * Crée la saisie estimée d'un contrat qui n'a pas déclaré, puis sa facture.
+ * L'INDEX N'AVANCE PAS : seul un vrai relevé fait avancer le compteur. La prochaine saisie
+ * réelle mesure donc toute la période depuis le dernier index réel (base de RG19).
+ * Retourne l'id de la facture, ou false.
+ */
+function facturation_generer_estimation($idContrat, $idClient, $annee, $mois)
+{
+    $prec = bd_consommation_index_precedent_contrat($idContrat, $annee, $mois);
+    [$eau, $elec] = facturation_estimer_conso($idContrat, $annee, $mois);
+
+    $idConso = enregistrer(
+        $idClient, $annee, $mois,
+        $prec['eau'], $prec['eau'], $eau, null,
+        $prec['elec'], $prec['elec'], $elec, null,
+        'ESTIMEE', 'VALIDE', $idContrat
+    );
+    if (!$idConso) {
+        return false;
+    }
+    $idFacture = genererFacture($idConso);
+    bd_journal_enregistrer(
+        null, 'GENERATION_ESTIMATION', 'consommations', (int) $idConso,
+        "Estimation du contrat $idContrat pour $mois/$annee : $eau m3, $elec kWh"
+    );
+    return $idFacture;
+}
+
+/** Estime tous les contrats actifs qui n'ont pas saisi ce mois-là. Retourne le nombre de factures créées. */
+function facturation_estimer_mois($annee, $mois)
+{
+    $nb = 0;
+    foreach (bd_facture_contrats_a_estimer($annee, $mois) as $ct) {
+        if (facturation_generer_estimation((int) $ct['id_contrat'], (int) $ct['id_client'], $annee, $mois)) {
+            $nb++;
+        }
+    }
+    return $nb;
+}
+

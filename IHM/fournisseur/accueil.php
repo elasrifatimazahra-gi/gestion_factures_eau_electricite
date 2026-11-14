@@ -36,7 +36,7 @@ $menu = [
     ['Paiements',       '#',                         'carte',      false, false],
     ['Coupures',        '#',                         'eclair',     false, false],
     ['Sanctions',       '#',                         'bouclier',   false, false],
-    ['Contrôle annuel', '#',                         'calendrier', false, false],
+    ['Contrôle annuel', BASE_URL . 'Controle/index', 'calendrier', false, true],
     ['Paramètres',      BASE_URL . 'Parametre/index', 'reglages',   false, true],
     ['Journal',         BASE_URL . 'Journal/index',   'journal',    false, true],
 ];

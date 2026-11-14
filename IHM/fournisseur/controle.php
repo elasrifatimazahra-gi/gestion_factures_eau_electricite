@@ -52,7 +52,6 @@ $filtre = $_GET['statut'] ?? '';
                 <form method="post" action="<?= BASE_URL ?>Controle/valider" style="display:flex;gap:6px;flex-wrap:wrap">
                     <input type="hidden" name="csrf_token" value="<?= $h(csrf_token_m1()) ?>">
                     <input type="hidden" name="id_controle" value="<?= (int) $c['id_controle'] ?>">
-                    <input type="text" name="observations" placeholder="Observation (facultatif)" maxlength="200">
                      <button type="submit" name="decision" value="valider" class="btn btn--primary">Valider</button>
                     <button type="submit" name="decision" value="rejeter" class="btn btn--rejet">Rejeter</button>
                 </form>

@@ -507,3 +507,14 @@ body {
 .filtre-statut:focus { outline: 2px solid var(--green-700); outline-offset: 2px; }
 .btn--rejet { background: #b42318; color: #fff; }
 .btn--rejet:hover { background: #912018; }
+
+/* Menu plus compact : tous les boutons visibles sans défilement */
+.nav { gap: 2px; }
+.nav__link { padding: 9px 12px; gap: 10px; font-size: 14px; }
+.nav__link span { white-space: nowrap; }
+.brand { padding-bottom: 12px; }
+
+@media (max-height: 800px) {
+  .nav__link { padding: 7px 12px; }
+  .sidebar { padding: 12px 12px; }
+}

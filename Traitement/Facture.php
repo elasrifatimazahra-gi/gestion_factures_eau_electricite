@@ -83,6 +83,9 @@ function facture_groupes($f)
 
 function facture_type_services($f)
 {
+        if (($f['type_facture'] ?? '') === 'REGULARISATION') {
+        return 'Régularisation';
+    }
     $eau = (int) $f['conso_eau'] > 0;
     $elec = (int) $f['conso_elec'] > 0;
     if ($eau && !$elec) {
