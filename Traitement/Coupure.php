@@ -249,7 +249,8 @@ function Coupure_index($param = null)
     unset($_SESSION['message_coupure']);
     $erreur = $_SESSION['erreur_coupure'] ?? null;
     unset($_SESSION['erreur_coupure']);
-
+    $rapport = $_SESSION['rapport_rappel'] ?? null;
+    unset($_SESSION['rapport_rappel']);
     include ROOT . 'IHM/fournisseur/coupures.php';
 }
 

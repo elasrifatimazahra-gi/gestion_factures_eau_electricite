@@ -1,8 +1,11 @@
 <?php
-// Variables fournies par Coupure_index : $coupures, $contrats, $motifs, $statuts, $filtre, $frais, $message, $erreur
+// Variables fournies par Coupure_index : $coupures, $contrats, $motifs, $statuts, $filtre, $frais, $message, $erreur, $rapport
 $titreFournisseur = 'Coupures';
 $sousTitreFournisseur = 'Chaque coupure vise un seul contrat : les autres contrats du même client ne sont pas touchés.';
 include ROOT . 'IHM/layouts/fournisseur_header.php';
+?>
+<link rel="stylesheet" href="<?= BASE_URL ?>assets/css/Coupure.css?v=<?= filemtime(ROOT . 'assets/css/Coupure.css') ?>">
+<?php
 
 $dh = function ($v) { return number_format((float) $v, 2, ',', ' ') . ' DH'; };
 $onglets = ['PROGRAMMEE' => 'Programmées', 'EFFECTUEE' => 'Effectuées', 'RETABLIE' => 'Rétablies', 'ANNULEE' => 'Annulées', 'TOUTES' => 'Toutes'];
@@ -17,7 +20,28 @@ $aujourdhui = date('Y-m-d');
         <div class="m4-notice m4-notice--error" role="alert"><span><?= htmlspecialchars($erreur) ?></span><button class="m4-notice__close" type="button" aria-label="Fermer">×</button></div>
     <?php endif; ?>
 
-    <div style="margin-bottom:16px">
+    <?php if ($rapport): ?>
+        <div class="m4-rapport">
+            <div class="m4-rapport__titre">
+                <h3>Rapport des tâches planifiées — <?= htmlspecialchars($rapport['date']) ?></h3>
+                <button class="m4-notice__close" type="button" aria-label="Fermer" onclick="this.closest('.m4-rapport').remove()">×</button>
+            </div>
+            <ul>
+                <li>Estimations générées pour <?= htmlspecialchars($rapport['mois_estime']) ?> : <strong><?= (int) $rapport['estimations'] ?></strong></li>
+                <li>Pénalités de retard appliquées : <strong class="<?= $rapport['penalites'] ? 'm4-text-danger' : '' ?>"><?= count($rapport['penalites']) ?></strong>
+                    <?php if ($rapport['penalites']): ?><br><small><?= htmlspecialchars(implode(' · ', $rapport['penalites'])) ?></small><?php endif; ?></li>
+                <li>Coupures programmées (trois mois impayés) : <strong class="<?= $rapport['coupures'] ? 'm4-text-danger' : '' ?>"><?= count($rapport['coupures']) ?></strong>
+                    <?php if ($rapport['coupures']): ?><br><small><?= htmlspecialchars(implode(' · ', $rapport['coupures'])) ?></small><?php endif; ?></li>
+                <li>Contrats sans déclaration depuis plusieurs mois : <strong class="<?= $rapport['non_declares'] ? 'm4-text-danger' : '' ?>"><?= count($rapport['non_declares']) ?></strong>
+                    <?php if ($rapport['non_declares']): ?><br><small><?= htmlspecialchars(implode(' · ', $rapport['non_declares'])) ?></small><?php endif; ?></li>
+            </ul>
+            <?php foreach ($rapport['erreurs'] as $e): ?>
+                <p class="m4-text-danger"><?= htmlspecialchars($e) ?></p>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
+
+    <div class="m4-barre">
         <details class="m4-details">
             <summary class="m1-button">Programmer une coupure</summary>
             <form class="m1-edit-form" method="post" action="<?= BASE_URL ?>Coupure/programmer"
@@ -47,6 +71,14 @@ $aujourdhui = date('Y-m-d');
                 <button class="m1-button m1-button--small" type="submit">Programmer</button>
             </form>
         </details>
+
+        <form method="post" action="<?= BASE_URL ?>Rappel/executer"
+              data-confirm="Estimer le mois écoulé, appliquer les pénalités de retard, programmer les coupures à trois mois impayés et envoyer les alertes ?"
+              data-confirm-title="Exécuter les tâches planifiées"
+              data-confirm-label="Exécuter">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrf_token_m1()) ?>">
+            <button class="m1-button m1-button--secondary" type="submit">Exécuter les tâches planifiées</button>
+        </form>
     </div>
 
     <p>
