@@ -137,6 +137,9 @@ CREATE TABLE `contrats` (
     `index_initial_eau` INT NOT NULL DEFAULT 0,
     `index_initial_elec` INT NOT NULL DEFAULT 0,
     `statut` ENUM('ACTIF', 'SUSPENDU', 'RESILIE') NOT NULL DEFAULT 'ACTIF',
+    `statut_service` ENUM('ACTIF', 'AVERTISSEMENT', 'COUPE') NOT NULL DEFAULT 'ACTIF',
+    `nb_mois_impayes_consecutifs` INT NOT NULL DEFAULT 0,
+    `nb_mois_non_declares_consecutifs` INT NOT NULL DEFAULT 0,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     KEY `idx_contrats_client` (`id_client`),
@@ -386,6 +389,7 @@ CREATE TABLE `sanctions` (
 CREATE TABLE `coupures_services` (
     `id_coupure` INT AUTO_INCREMENT PRIMARY KEY,
     `id_client` INT NOT NULL,
+    `id_contrat` INT NULL,
     `id_sanction` INT NULL,
     `motif_coupure` ENUM('TROIS_MOIS_IMPAYES', 'SANCTION_FRAUDE_NON_PAYEE', 'DEMANDE_FOURNISSEUR') NOT NULL,
     `service_coupe` ENUM('EAU', 'ELECTRICITE', 'TOUS_LES_DEUX') NOT NULL DEFAULT 'TOUS_LES_DEUX',
@@ -397,7 +401,9 @@ CREATE TABLE `coupures_services` (
     `date_retablissement` DATETIME NULL,
     `agent_responsable` INT NULL,
     `commentaire` TEXT NULL,
+    KEY `idx_coupure_contrat` (`id_contrat`),
     FOREIGN KEY (`id_client`) REFERENCES `clients`(`id_client`) ON DELETE CASCADE,
+    FOREIGN KEY (`id_contrat`) REFERENCES `contrats`(`id_contrat`) ON DELETE SET NULL,
     FOREIGN KEY (`id_sanction`) REFERENCES `sanctions`(`id_sanction`) ON DELETE SET NULL,
     FOREIGN KEY (`agent_responsable`) REFERENCES `utilisateurs`(`id_utilisateur`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -479,7 +485,8 @@ INSERT INTO `types_activite` (`id_type_activite`, `code`, `libelle`) VALUES
 (3, 'INDUSTRIEL', 'Industriel');
 
 INSERT INTO `quartiers` (`id_quartier`, `nom`, `id_type_activite`) VALUES
-(1, 'Quartier résidentiel (démo)', 1);
+(1, 'Quartier résidentiel (démo)', 1),
+(2, 'Zone commerciale Martil (démo)', 2);
 
 -- Tarifs electricite (RG26) :
 INSERT INTO `tarifs_tranches` (`id_type_activite`, `type_fluide`, `tranche_num`, `borne_min`, `borne_max`, `prix_unitaire_dh`, `description`) VALUES
@@ -543,7 +550,8 @@ INSERT INTO `clients` (`id_client`, `id_utilisateur`, `numero_client`, `cin`, `n
 
 INSERT INTO `contrats` (`id_contrat`, `numero_contrat`, `id_client`, `id_quartier`, `numero_compteur_eau`, `numero_compteur_elec`, `index_initial_eau`, `index_initial_elec`) VALUES
 (1, 'CTR-CLT-2026-000101', 1, 1, 'CPT-EAU-1001', 'CPT-ELEC-2001', 120, 1500),
-(2, 'CTR-CLT-2026-000102', 2, 1, 'CPT-EAU-1002', 'CPT-ELEC-2002', 85, 920);
+(2, 'CTR-CLT-2026-000102', 2, 1, 'CPT-EAU-1002', 'CPT-ELEC-2002', 85, 920),
+(3, 'CTR-CLT-2026-000101-B', 1, 2, 'CPT-EAU-1001-B', 'CPT-ELEC-2001-B', 0, 0);
 
 -- Donnees du cas chiffre officiel (Section 4.6.4 p.16-17) :
 -- 134 kWh elec (123.28 DH) + 9 m3 eau (66.51 DH) -> HT: 189.79 DH, TVA 18%: 34.16 DH, TTC: 223.95 DH
@@ -552,6 +560,20 @@ INSERT INTO `consommations` (`id_conso`, `id_client`, `id_contrat`, `annee`, `mo
 
 INSERT INTO `factures` (`id_facture`, `numero_facture`, `id_client`, `id_contrat`, `id_conso`, `periode_mois`, `periode_annee`, `date_emission`, `date_echeance`, `type_facture`, `index_eau_debut`, `index_eau_fin`, `conso_eau`, `montant_ht_eau`, `index_elec_debut`, `index_elec_fin`, `conso_elec`, `montant_ht_elec`, `montant_ht`, `taux_tva`, `montant_tva`, `montant_ttc`, `credit_deduit`, `penalite_retard`, `penalite_appliquee`, `montant_total_a_payer`, `montant_paye`, `reste_a_payer`, `statut`, `photo_eau_facture`, `photo_elec_facture`) VALUES
 (1, 'FAC-2026-09-000101', 1, 1, 1, 9, 2026, '2026-10-01', '2026-10-15', 'MENSUELLE', 120, 129, 9, 66.51, 1500, 1634, 134, 123.28, 189.79, 18.00, 34.16, 223.95, 0.00, 0.00, FALSE, 223.95, 0.00, 223.95, 'IMPAYEE', 'uploads/compteurs/eau_clt101_202609.jpg', 'uploads/compteurs/elec_clt101_202609.jpg');
+
+-- Factures de test membre 4 (coupure par contrat)
+--    Contrat A (id 1, résidentiel) : juillet + août impayées (+ septembre déjà présente) = 3 mois impayés -> coupure possible.
+--    Contrat B (id 3, commercial)  : septembre impayée seulement -> ne doit PAS être coupé.
+--    Résidentiel : 10 m3 -> 73.90 ; 100 kWh -> 82.00 ; HT 155.90 ; TVA 28.06 ; TTC 183.96
+--    Commercial  : 10 m3 -> 92.38 ; 100 kWh -> 102.50 ; HT 194.88 ; TVA 35.08 ; TTC 229.96
+INSERT INTO `factures`
+ (`numero_facture`,`id_client`,`id_contrat`,`periode_mois`,`periode_annee`,`date_emission`,`date_echeance`,`type_facture`,
+  `index_eau_debut`,`index_eau_fin`,`conso_eau`,`montant_ht_eau`,`index_elec_debut`,`index_elec_fin`,`conso_elec`,`montant_ht_elec`,
+  `montant_ht`,`taux_tva`,`montant_tva`,`montant_ttc`,`montant_total_a_payer`,`reste_a_payer`,`statut`) VALUES
+('FAC-2026-07-000101', 1, 1, 7, 2026, '2026-08-01', '2026-08-15', 'MENSUELLE', 100,110,10, 73.90, 1300,1400,100, 82.00, 155.90,18.00,28.06,183.96,183.96,183.96,'IMPAYEE'),
+('FAC-2026-08-000101', 1, 1, 8, 2026, '2026-09-01', '2026-09-15', 'MENSUELLE', 110,120,10, 73.90, 1400,1500,100, 82.00, 155.90,18.00,28.06,183.96,183.96,183.96,'IMPAYEE'),
+('FAC-2026-09-000101-C3', 1, 3, 9, 2026, '2026-10-01', '2026-10-15', 'MENSUELLE', 0,10,10, 92.38, 0,100,100, 102.50, 194.88,18.00,35.08,229.96,229.96,229.96,'IMPAYEE');
+
 
 INSERT INTO `journal_actions` (`id_utilisateur`, `action_type`, `table_concernee`, `id_entite`, `description`, `adresse_ip`) VALUES
 (1, 'INITIALISATION_SYSTEME', 'parametres', 1, 'Initialisation du schema de la base de donnees', '127.0.0.1');
