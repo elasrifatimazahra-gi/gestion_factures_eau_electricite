@@ -242,3 +242,86 @@ function bd_facture_moyenne_contrat($idContrat, $annee, $mois)
     }
     return ['eau' => (int) round($row['eau'] / $row['nb_mois']), 'elec' => (int) round($row['elec'] / $row['nb_mois'])];
 }
+
+function bd_facture_enregistrer_paiement($idFacture, $montantPaye, $reste, $soldee)
+{
+    $link = Connexion();
+    $stmt = mysqli_prepare(
+        $link,
+        "UPDATE factures
+         SET montant_paye = ?, reste_a_payer = ?,
+             statut = IF(?, 'PAYEE', statut),
+             date_paiement = IF(?, NOW(), date_paiement)
+         WHERE id_facture = ?"
+    );
+    if (!$stmt) {
+        throw new RuntimeException('Impossible de préparer la mise à jour de la facture : ' . mysqli_error($link));
+    }
+    $montantPaye = (float) $montantPaye;
+    $reste = (float) $reste;
+    $soldee = $soldee ? 1 : 0;
+    $idFacture = (int) $idFacture;
+    mysqli_stmt_bind_param($stmt, 'ddiii', $montantPaye, $reste, $soldee, $soldee, $idFacture);
+    $ok = mysqli_stmt_execute($stmt);
+    $erreur = mysqli_stmt_error($stmt);
+    mysqli_stmt_close($stmt);
+    if (!$ok) {
+        throw new RuntimeException('Impossible de mettre à jour la facture : ' . $erreur);
+    }
+}
+// ===== ÉTAPE 2 - À COLLER TOUT À LA FIN de BD/Facture.php (après la fonction de l'étape 1) =====
+// (pas de balise <?php : le fichier est déjà ouvert en PHP)
+
+/**
+ * Factures à pénaliser, avec ce qu'il faut pour notifier le client (RG33).
+ * Même condition que bd_facture_a_penaliser() : IMPAYEE, pénalité pas encore appliquée, échéance dépassée.
+ */
+function bd_facture_a_penaliser_detail()
+{
+    $link = Connexion();
+    $res = mysqli_query($link, "SELECT f.id_facture, f.numero_facture, f.id_client, f.id_contrat,
+                                       f.montant_ttc, f.date_echeance,
+                                       cl.id_utilisateur AS id_utilisateur_client,
+                                       ct.numero_contrat
+                                FROM factures f
+                                JOIN clients cl ON cl.id_client = f.id_client
+                                LEFT JOIN contrats ct ON ct.id_contrat = f.id_contrat
+                                WHERE f.statut = 'IMPAYEE'
+                                  AND f.penalite_appliquee = 0
+                                  AND f.date_echeance < CURDATE()
+                                ORDER BY f.id_facture");
+    return $res ? mysqli_fetch_all($res, MYSQLI_ASSOC) : [];
+}
+
+/**
+ * Applique la pénalité UNE seule fois : la condition penalite_appliquee = 0 dans le WHERE empêche
+ * qu'un second appel simultané (deux pages ouvertes en même temps) ajoute la pénalité deux fois.
+ * Retourne true seulement si CET appel a appliqué la pénalité.
+ */
+function bd_facture_appliquer_penalite_unique($idFacture, $penalite)
+{
+    $link = Connexion();
+    $stmt = mysqli_prepare(
+        $link,
+        "UPDATE factures
+         SET penalite_retard = ?, penalite_appliquee = 1,
+             montant_total_a_payer = montant_total_a_payer + ?,
+             reste_a_payer = reste_a_payer + ?,
+             statut = 'EN_RETARD'
+         WHERE id_facture = ? AND penalite_appliquee = 0 AND statut = 'IMPAYEE'"
+    );
+    if (!$stmt) {
+        throw new RuntimeException('Impossible de préparer la pénalité : ' . mysqli_error($link));
+    }
+    $penalite = (float) $penalite;
+    $idFacture = (int) $idFacture;
+    mysqli_stmt_bind_param($stmt, 'dddi', $penalite, $penalite, $penalite, $idFacture);
+    $ok = mysqli_stmt_execute($stmt);
+    $appliquee = $ok && mysqli_stmt_affected_rows($stmt) > 0;
+    $erreur = mysqli_stmt_error($stmt);
+    mysqli_stmt_close($stmt);
+    if (!$ok) {
+        throw new RuntimeException('Impossible d\'appliquer la pénalité : ' . $erreur);
+    }
+    return $appliquee;
+}

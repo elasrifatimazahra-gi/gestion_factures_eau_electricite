@@ -8,6 +8,7 @@ $controleurs = [
     'Auth', 'Client', 'Consommation', 'Anomalie', 'Facture',
     'Parametre', 'Journal', 'Notification', 'Contrat', 'Quartier', 'Agent',
     'Controle', 'Import', 'FacturePdf', 'Reclamation', 'Sanction',
+    'Paiement', 'Coupure', 'Rappel',
 ];
 
 $url        = explode('/', trim($_GET['url'] ?? '', '/'));
