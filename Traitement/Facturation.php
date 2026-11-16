@@ -38,28 +38,62 @@ function genererFacture($idConso)
         return false;
     }
 
-        // Le contrat de la consommation donne le quartier, donc le type d'activité, donc la grille
+    $mois = (int) $c['mois'];
+    $annee = (int) $c['annee'];
+
+    // Le contrat de la consommation donne le quartier, donc le type d'activité, donc la grille
     $idContrat = !empty($c['id_contrat']) ? (int) $c['id_contrat'] : null;
     $idType = $idContrat ? bd_tarif_type_du_contrat($idContrat) : null;
 
-    $htEau = calculerMontantFluide('EAU', $c['conso_eau'], $idType);
-    $htElec = calculerMontantFluide('ELECTRICITE', $c['conso_elec'], $idType);
+    // Régularisation (RG19) : des mois estimés attendent ce vrai relevé
+    $estimees = [];
+    if ($idContrat && $c['type_saisie'] !== 'ESTIMEE') {
+        $estimees = bd_facture_estimees_a_regulariser($idContrat, $annee, $mois);
+    }
+
+    if ($estimees) {
+        // La consommation réelle couvre toute la période : on la répartit sur les mois
+        // concernés et on applique le barème MENSUEL à chaque part.
+        $nbMois = count($estimees) + 1;
+        $htEau = 0.0;
+        foreach (facturation_repartir($c['conso_eau'], $nbMois) as $part) {
+            $htEau += calculerMontantFluide('EAU', $part, $idType);
+        }
+        $htElec = 0.0;
+        foreach (facturation_repartir($c['conso_elec'], $nbMois) as $part) {
+            $htElec += calculerMontantFluide('ELECTRICITE', $part, $idType);
+        }
+        $htEau = round($htEau, 2);
+        $htElec = round($htElec, 2);
+    } else {
+        $htEau = calculerMontantFluide('EAU', $c['conso_eau'], $idType);
+        $htElec = calculerMontantFluide('ELECTRICITE', $c['conso_elec'], $idType);
+    }
     $ht = round($htEau + $htElec, 2);
 
     $tauxTva = (float) lireParametre('TVA_POURCENT', 18);
     $tva = round($ht * $tauxTva / 100, 2);
     $ttc = round($ht + $tva, 2);
-        // Crédit du client (sur-déclaration au contrôle annuel) : déduit de cette facture
-    $credit = min(bd_client_credit($c['id_client']), $ttc);
-    $aPayer = round($ttc - $credit, 2);
+
+    // Ce qui a déjà été facturé en estimation est déduit (montant négatif).
+    // Si le client a trop payé, l'excédent devient un crédit sur son compte.
+    $regularisation = $estimees ? -round(array_sum(array_column($estimees, 'ttc_estime')), 2) : 0.0;
+    $base = round($ttc + $regularisation, 2);
+    $creditRegul = 0.0;
+    if ($base < 0) {
+        $creditRegul = -$base;
+        $base = 0.0;
+    }
+
+    // Crédit du client (sur-déclaration au contrôle annuel, trop-perçu) : déduit de cette facture
+    $credit = min(bd_client_credit($c['id_client']), $base);
+    $aPayer = round($base - $credit, 2);
 
     // RG29 : échéance le 15 du mois suivant la période facturée
     $jour = (int) lireParametre('JOUR_ECHEANCE_FACTURE', 15);
-    $mois = (int) $c['mois'];
-    $annee = (int) $c['annee'];
     $echeance = date('Y-m-', strtotime(sprintf('%04d-%02d-01 +1 month', $annee, $mois))) . sprintf('%02d', $jour);
 
-    $idFacture = bd_facture_creer([
+    $donnees = [
         'numero_facture'        => bd_facture_numero($c['id_client'], $annee, $mois, $idContrat),
         'id_client'             => $c['id_client'],
         'id_contrat'            => $idContrat,
@@ -87,10 +121,28 @@ function genererFacture($idConso)
         'statut'                => $aPayer > 0 ? 'IMPAYEE' : 'PAYEE',
         'photo_eau_facture'     => $c['photo_compteur_eau'],
         'photo_elec_facture'    => $c['photo_compteur_elec'],
-    ]);
+    ];
+    if ($regularisation != 0) {
+        $donnees['montant_regularisation'] = $regularisation;   // colonne ajoutée par migration_regularisation.sql
+    }
+    $idFacture = bd_facture_creer($donnees);
 
-    if ($idFacture && $credit > 0) {
-        bd_client_modifier_credit($c['id_client'], -$credit);
+    if ($idFacture) {
+        if ($credit > 0) {
+            bd_client_modifier_credit($c['id_client'], -$credit);
+        }
+        if ($creditRegul > 0) {
+            bd_client_modifier_credit($c['id_client'], $creditRegul);
+        }
+        foreach ($estimees as $e) {
+            mettreAJourStatut((int) $e['id_conso'], 'REGULARISEE');   // ces mois sont réglés
+        }
+        if ($estimees) {
+            bd_journal_enregistrer(
+                null, 'REGULARISATION_ESTIMATION', 'factures', (int) $idFacture,
+                'Régularisation de ' . count($estimees) . ' mois estimés du contrat ' . $idContrat . ' : ' . number_format($regularisation, 2, '.', '') . ' DH déduits'
+            );
+        }
     }
     return $idFacture;
 }
@@ -176,3 +228,16 @@ function facturation_estimer_mois($annee, $mois)
     return $nb;
 }
 
+/** Répartit un total entier en $n parts entières, la somme restant exacte (ex. 28 sur 3 : 10, 9, 9). */
+function facturation_repartir($total, $n)
+{
+    $total = (int) $total;
+    $n = max(1, (int) $n);
+    $base = intdiv($total, $n);
+    $reste = $total - $base * $n;
+    $parts = [];
+    for ($i = 0; $i < $n; $i++) {
+        $parts[] = $base + ($i < $reste ? 1 : 0);
+    }
+    return $parts;
+}

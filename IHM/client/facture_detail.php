@@ -45,8 +45,8 @@ $totaux = [
     ['TVA (' . $pct($facture['taux_tva']) . ' %)', 'الضريبة على القيمة المضافة', $dh($facture['montant_tva']), ''],
     ['Total TTC', 'المجموع مع الضريبة', $dh($facture['montant_ttc']), 'fort'],
 ];
-if ((float) $facture['credit_deduit'] > 0) {
-    $totaux[] = ['Crédit déduit', 'الرصيد المخصوم', '- ' . $dh($facture['credit_deduit']), ''];
+if ((float) ($facture['montant_regularisation'] ?? 0) != 0) {
+    $totaux[] = ['Estimations déjà facturées', 'التقديرات المفوترة سابقًا', '- ' . $dh(abs($facture['montant_regularisation'])), ''];
 }
 if ($facture['penalite_appliquee']) {
     $totaux[] = ['Pénalité de retard', 'غرامة التأخير', $dh($facture['penalite_retard']), 'penalite'];

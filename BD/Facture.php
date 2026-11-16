@@ -242,3 +242,23 @@ function bd_facture_moyenne_contrat($idContrat, $annee, $mois)
     }
     return ['eau' => (int) round($row['eau'] / $row['nb_mois']), 'elec' => (int) round($row['elec'] / $row['nb_mois'])];
 }
+
+/**
+ * Saisies estimées d'un contrat qui attendent encore un vrai relevé (mois avant (annee, mois)).
+ * Pour chacune : son id et le TTC déjà facturé en estimation.
+ */
+function bd_facture_estimees_a_regulariser($idContrat, $annee, $mois)
+{
+    $link = Connexion();
+    $idContrat = (int) $idContrat;
+    $ref = (int) $annee * 12 + (int) $mois;
+    $res = mysqli_query($link, "SELECT co.id_conso, COALESCE(f.montant_ttc, 0) AS ttc_estime
+                                FROM consommations co
+                                LEFT JOIN factures f ON f.id_conso = co.id_conso AND f.statut <> 'ANNULEE'
+                                WHERE co.id_contrat = $idContrat
+                                  AND co.type_saisie = 'ESTIMEE'
+                                  AND co.statut = 'VALIDE'
+                                  AND co.annee * 12 + co.mois < $ref
+                                ORDER BY co.annee, co.mois");
+    return $res ? mysqli_fetch_all($res, MYSQLI_ASSOC) : [];
+}
