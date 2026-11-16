@@ -10,13 +10,16 @@ function Reclamation_liste($param = null)
 {
     exiger_role('CLIENT');
     $idClient = (int) ($_SESSION['id_client'] ?? 0);
-    $client = bd_facture_infos_client($idClient) ?: [];
-    $reclamations = bd_reclamation_lister_client($idClient);
+    $contrat = auth_exiger_contrat($idClient);
+    $idContrat = $contrat ? (int) $contrat['id_contrat'] : null;
+    $client = $idContrat ? bd_facture_infos_contrat($idContrat, $idClient) : bd_facture_infos_client($idClient);
+    $client = $client ?: [];
+    $reclamations = bd_reclamation_lister_client($idClient, $idContrat);
     foreach ($reclamations as &$reclamation) {
         $reclamation['messages'] = bd_reclamation_messages_lister((int) $reclamation['id_reclamation']);
     }
     unset($reclamation);
-    $factures = bd_facture_du_client($idClient);
+    $factures = $idContrat ? bd_facture_du_contrat($idContrat, $idClient) : bd_facture_du_client($idClient);
     $typesReclamation = TYPES_RECLAMATION;
     $erreur = $_SESSION['erreur_reclamation'] ?? '';
     $message = $_SESSION['message_reclamation'] ?? '';
@@ -40,11 +43,13 @@ function Reclamation_creer($param = null)
     $autreMotif = is_string($_POST['autre_motif'] ?? null) ? trim($_POST['autre_motif']) : '';
     $idFactureBrut = $_POST['id_facture'] ?? '';
     $idClient = (int) ($_SESSION['id_client'] ?? 0);
+    $contrat = auth_exiger_contrat($idClient);
+    $idContrat = $contrat ? (int) $contrat['id_contrat'] : null;
     $idFacture = $idFactureBrut === '' ? null : filter_var($idFactureBrut, FILTER_VALIDATE_INT);
 
     if (!in_array($type, TYPES_RECLAMATION, true) || $description === '' || mb_strlen($description) > 5000
         || ($type === 'AUTRE' && ($autreMotif === '' || mb_strlen($autreMotif) > 255))
-        || ($idFactureBrut !== '' && (!$idFacture || !bd_facture_detail($idFacture, $idClient)))) {
+        || ($idFactureBrut !== '' && (!$idFacture || !bd_facture_detail($idFacture, $idClient, $idContrat)))) {
         $_SESSION['erreur_reclamation'] = 'Vérifiez le type, la description et la facture associée.';
         rediriger('Reclamation/liste');
     }
@@ -59,7 +64,8 @@ function Reclamation_creer($param = null)
             $idFacture,
             $type,
             $type === 'AUTRE' ? $autreMotif : null,
-            $description
+            $description,
+            $idContrat
         );
         bd_journal_enregistrer(
             (int) $_SESSION['id_utilisateur'],
@@ -104,7 +110,9 @@ function Reclamation_message($param = null)
     $idReclamation = filter_var($_POST['id_reclamation'] ?? null, FILTER_VALIDATE_INT);
     $message = is_string($_POST['message'] ?? null) ? trim($_POST['message']) : '';
     $idClient = (int) ($_SESSION['id_client'] ?? 0);
-    $reclamation = $idReclamation ? bd_reclamation_trouver($idReclamation, $idClient) : null;
+    $contrat = auth_exiger_contrat($idClient);
+    $idContrat = $contrat ? (int) $contrat['id_contrat'] : null;
+    $reclamation = $idReclamation ? bd_reclamation_trouver($idReclamation, $idClient, $idContrat) : null;
     if (!$reclamation || !in_array($reclamation['statut'], ['OUVERTE', 'EN_COURS'], true)
         || $message === '' || mb_strlen($message) > 5000) {
         $_SESSION['erreur_reclamation'] = 'Cette réclamation ne peut pas recevoir de message.';

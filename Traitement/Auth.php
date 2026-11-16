@@ -1,6 +1,7 @@
 <?php 
 
 include_once(ROOT . 'BD/Utilisateur.php');
+require_once ROOT . 'BD/Contrat.php';
 const NB_ECHECS         = 5;
 const DUREE_BLOCAGE      = 15;
 const MINUTES_INACTIVITE = 15;
@@ -124,9 +125,13 @@ function Auth_connecter($param = null)
     $_SESSION['derniere_activite'] = time();
 
     if ($user['role'] === 'CLIENT') {
+        unset($_SESSION['id_contrat'], $_SESSION['id_client'], $_SESSION['id_agent']);
         $_SESSION['id_client'] = bd_utilisateur_id_client($user['id_utilisateur']);
     } elseif ($user['role'] === 'AGENT') {
+        unset($_SESSION['id_contrat'], $_SESSION['id_client'], $_SESSION['id_agent']);
         $_SESSION['id_agent'] = $idAgent;
+    } else {
+        unset($_SESSION['id_contrat'], $_SESSION['id_client'], $_SESSION['id_agent']);
     }
     rediriger('Auth/accueil');
 }
@@ -157,7 +162,14 @@ function Auth_accueil($param = null)
     }
  
     // ----- Client : vue d'ensemble -----
-    $d = auth_donnees_accueil_client((int) ($_SESSION['id_client'] ?? 0));
+    $idClient = (int) ($_SESSION['id_client'] ?? 0);
+    $contratsClient = bd_contrat_lister($idClient);
+    $contratSelectionne = auth_contrat_courant($idClient, $contratsClient);
+    if (count($contratsClient) > 1 && !$contratSelectionne) {
+        rediriger('Contrat/choisir');
+    }
+    $idContrat = $contratSelectionne ? (int) $contratSelectionne['id_contrat'] : null;
+    $d = auth_donnees_accueil_client($idClient, $idContrat);
     require_once ROOT . 'BD/Notification.php';
     $notificationsNonLues = bd_notification_compter_non_lues((int) $_SESSION['id_utilisateur']);
     extract($d);   // crée $client, $solde, $echeance, $nbImpayees, $etatSaisie, $dernierJour, $mois,
@@ -167,7 +179,37 @@ function Auth_accueil($param = null)
 }
  
 /** Rassemble toutes les données de la « Vue d'ensemble » client. */
-function auth_donnees_accueil_client($idClient)
+function auth_contrat_courant($idClient, $contrats = null)
+{
+    $idClient = (int) $idClient;
+    $contrats = $contrats === null ? bd_contrat_lister($idClient) : $contrats;
+    $idContrat = (int) ($_SESSION['id_contrat'] ?? 0);
+
+    foreach ($contrats as $contrat) {
+        if ((int) $contrat['id_contrat'] === $idContrat) {
+            return $contrat;
+        }
+    }
+
+    unset($_SESSION['id_contrat']);
+    if (count($contrats) === 1) {
+        $_SESSION['id_contrat'] = (int) $contrats[0]['id_contrat'];
+        return $contrats[0];
+    }
+    return null;
+}
+
+function auth_exiger_contrat($idClient)
+{
+    $contrats = bd_contrat_lister((int) $idClient);
+    $contrat = auth_contrat_courant($idClient, $contrats);
+    if (count($contrats) > 1 && !$contrat) {
+        rediriger('Contrat/choisir');
+    }
+    return $contrat;
+}
+
+function auth_donnees_accueil_client($idClient, $idContrat = null)
 {
     require_once ROOT . 'BD/Facture.php';
     require_once ROOT . 'BD/Consommation.php';
@@ -177,7 +219,9 @@ function auth_donnees_accueil_client($idClient)
     $client = bd_facture_infos_client($idClient) ?: ['nom' => '', 'prenom' => '', 'numero_client' => ''];
  
     // Factures : solde à payer, échéance la plus proche, 3 dernières factures
-    $factures   = bd_facture_du_client($idClient);
+    $factures = $idContrat
+        ? bd_facture_du_contrat($idContrat, $idClient)
+        : bd_facture_du_client($idClient);
     $solde      = 0.0;
     $echeance   = null;
     $nbImpayees = 0;
@@ -195,10 +239,10 @@ function auth_donnees_accueil_client($idClient)
     $jour  = (int) date('j');
     $mois  = (int) date('n');
     $annee = (int) date('Y');
-    $contratsActifs = bd_consommation_contrats_client($idClient);
-    if (!$contratsActifs) {
+    $contratActif = $idContrat ? bd_consommation_contrat_client($idContrat, $idClient) : null;
+    if (!$contratActif) {
         $etatSaisie = 'SANS_CONTRAT';
-    } elseif (bd_consommation_client_saisies_manquantes($idClient, $mois, $annee) === 0) {
+    } elseif (bd_consommation_contrat_existe($idContrat, $annee, $mois)) {
         $etatSaisie = 'DEJA_SAISI';
     } elseif ($jour < 18) {
         $etatSaisie = 'HORS_PERIODE';
@@ -207,7 +251,7 @@ function auth_donnees_accueil_client($idClient)
     }
  
     // Consommations : 6 derniers mois, dernier relevé et variation par rapport au mois précédent
-    $historique  = bd_tableau_consommations_client($idClient, 6);
+    $historique  = bd_tableau_consommations_client($idClient, 6, $idContrat);
     $dernier     = $historique ? end($historique) : null;
     $precedent   = count($historique) > 1 ? $historique[count($historique) - 2] : null;
  
@@ -270,7 +314,7 @@ function exiger_role($role)
 
     // 2. Session expirée ?
     if (time() - ($_SESSION['derniere_activite'] ?? 0) > MINUTES_INACTIVITE * 60) {
-        unset($_SESSION['id_utilisateur'], $_SESSION['role'], $_SESSION['derniere_activite'], $_SESSION['id_client'], $_SESSION['id_agent']);
+        unset($_SESSION['id_utilisateur'], $_SESSION['role'], $_SESSION['derniere_activite'], $_SESSION['id_client'], $_SESSION['id_agent'], $_SESSION['id_contrat']);
         $_SESSION['erreur_login'] = "Session expirée, veuillez vous reconnecter.";
         rediriger($page);
     }

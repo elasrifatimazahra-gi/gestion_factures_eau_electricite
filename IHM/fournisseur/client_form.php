@@ -54,6 +54,9 @@ include ROOT . 'IHM/layouts/fournisseur_header.php';
             <div class="actions-formulaire-client">
                 <button type="submit" class="bouton-client"><?= htmlspecialchars($bouton_formulaire) ?></button>
                 <button type="reset" class="bouton-annuler-client">Annuler</button>
+                <?php if (!empty($client_actuel['id_client'] ?? null)): ?>
+                    <a href="<?= BASE_URL ?>Contrat/ajouter/<?= (int) $client_actuel['id_client'] ?>" class="bouton-client bouton-client--secondary">+ Ajouter contrat</a>
+                <?php endif; ?>
             </div>
         </form>
     </div>

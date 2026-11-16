@@ -8,7 +8,10 @@ $prenom = $client['prenom'] ?? '';
 $nom = $client['nom'] ?? '';
 $initiales = mb_strtoupper(mb_substr($prenom, 0, 1) . mb_substr($nom, 0, 1));
 require_once ROOT . 'BD/Tableau_bord.php';
-$contratsClient = bd_tableau_contrats_client((int) ($_SESSION['id_client'] ?? 0));
+$contratsClient = bd_tableau_contrats_client(
+    (int) ($_SESSION['id_client'] ?? 0),
+    isset($idContrat) ? (int) $idContrat : null
+);
 
 $jours = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
 $moisFr = [1 => 'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
@@ -175,6 +178,7 @@ $conseils = [
             <div class="statut-portail"><span class="point-vert"></span> Amanor opérationnel</div>
             <div class="topbar-droite">
                 <div class="langues"><span class="actif">FR</span><span>AR</span></div>
+                <?php include ROOT . 'IHM/client/selecteur_contrat.php'; ?>
                 <a class="cloche m1-bell" href="<?= BASE_URL ?>Notification/liste" aria-label="Notifications non lues : <?= (int) ($notificationsNonLues ?? 0) ?>">
                     <?= $ico('cloche') ?>
                     <?php if (!empty($notificationsNonLues)): ?><span class="m1-bell-count"><?= (int) $notificationsNonLues ?></span><?php endif; ?>
@@ -267,20 +271,22 @@ $conseils = [
             <section class="carte carte-factures">
                 <div class="carte-entete carte-entete-pad">
                     <div>
-                        <h2>Mes contrats</h2>
-                        <p class="carte-sous">Indicateurs distincts pour chacun de vos contrats</p>
+                        <h2>Contrat sélectionné</h2>
+                        <p class="carte-sous">Historique et solde du contrat actuellement consulté</p>
                     </div>
                 </div>
                 <div class="clients-table-scroll">
                     <table>
-                        <thead><tr><th>Contrat</th><th>Quartier</th><th>Statut</th><th>Dernière consommation</th><th>Factures impayées</th><th>Solde</th></tr></thead>
+                        <thead><tr><th>Contrat</th><th>Quartier</th><th>Compteurs (eau / électricité)</th><th>Index initiaux (eau / électricité)</th><th>Statut</th><th>Dernière consommation</th><th>Factures impayées</th><th>Solde</th></tr></thead>
                         <tbody>
                         <?php if (!$contratsClient): ?>
-                            <tr><td class="vide" colspan="6">Aucun contrat enregistré.</td></tr>
+                            <tr><td class="vide" colspan="8">Aucun contrat enregistré.</td></tr>
                         <?php else: foreach ($contratsClient as $contrat): ?>
                             <tr>
                                 <td class="fort"><?= htmlspecialchars($contrat['numero_contrat']) ?></td>
                                 <td><?= htmlspecialchars($contrat['quartier']) ?></td>
+                                <td><?= htmlspecialchars($contrat['numero_compteur_eau'] ?? '—') ?> / <?= htmlspecialchars($contrat['numero_compteur_elec'] ?? '—') ?></td>
+                                <td><?= (int) $contrat['index_initial_eau'] ?> / <?= (int) $contrat['index_initial_elec'] ?></td>
                                 <td><?= htmlspecialchars($contrat['statut']) ?></td>
                                 <td><?= $contrat['derniere_eau'] === null && $contrat['derniere_electricite'] === null
                                     ? '—'

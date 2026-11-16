@@ -74,6 +74,7 @@ $photos = [
     <div class="barre-nom barre-nom--amanor">Amanor</div>
     <div class="barre-droite">
         <span class="nom-client"><?= htmlspecialchars($nomClient) ?></span>
+        <?php if ($afficherOutils): $routeRetourContrat = 'Facture/liste'; include ROOT . 'IHM/client/selecteur_contrat.php'; endif; ?>
         <a class="btn-deco" href="<?= BASE_URL ?>Auth/logout"><?= $ico('sortie') ?> Déconnexion</a>
     </div>
 </header>

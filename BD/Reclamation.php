@@ -11,7 +11,7 @@ const TYPES_RECLAMATION = [
     'AUTRE',
 ];
 
-function bd_reclamation_lister_client($idClient)
+function bd_reclamation_lister_client($idClient, $idContrat = null)
 {
     $link = Connexion();
     $stmt = mysqli_prepare(
@@ -19,14 +19,15 @@ function bd_reclamation_lister_client($idClient)
         "SELECT r.*, f.numero_facture
          FROM reclamations r
          LEFT JOIN factures f ON f.id_facture = r.id_facture
-         WHERE r.id_client = ?
+         WHERE r.id_client = ? AND (? IS NULL OR r.id_contrat = ? OR r.id_contrat IS NULL)
          ORDER BY r.created_at DESC, r.id_reclamation DESC"
     );
     if (!$stmt) {
         throw new RuntimeException("Impossible de préparer la liste des réclamations : " . mysqli_error($link));
     }
     $idClient = (int) $idClient;
-    mysqli_stmt_bind_param($stmt, 'i', $idClient);
+    $idContratBind = $idContrat !== null ? (int) $idContrat : null;
+    mysqli_stmt_bind_param($stmt, 'iii', $idClient, $idContratBind, $idContratBind);
     if (!mysqli_stmt_execute($stmt)) {
         $erreur = mysqli_stmt_error($stmt);
         mysqli_stmt_close($stmt);
@@ -113,7 +114,7 @@ function bd_reclamation_lister_fournisseur()
     return mysqli_fetch_all($resultat, MYSQLI_ASSOC);
 }
 
-function bd_reclamation_trouver($idReclamation, $idClient = null)
+function bd_reclamation_trouver($idReclamation, $idClient = null, $idContrat = null)
 {
     $link = Connexion();
     $sql = "SELECT r.*, f.numero_facture, c.id_client, c.id_utilisateur,
@@ -123,7 +124,7 @@ function bd_reclamation_trouver($idReclamation, $idClient = null)
             LEFT JOIN factures f ON f.id_facture = r.id_facture
             WHERE r.id_reclamation = ?";
     if ($idClient !== null) {
-        $sql .= " AND r.id_client = ?";
+        $sql .= " AND r.id_client = ? AND (? IS NULL OR r.id_contrat = ? OR r.id_contrat IS NULL)";
     }
     $stmt = mysqli_prepare($link, $sql);
     if (!$stmt) {
@@ -134,7 +135,8 @@ function bd_reclamation_trouver($idReclamation, $idClient = null)
         mysqli_stmt_bind_param($stmt, 'i', $idReclamation);
     } else {
         $idClient = (int) $idClient;
-        mysqli_stmt_bind_param($stmt, 'ii', $idReclamation, $idClient);
+        $idContratBind = $idContrat !== null ? (int) $idContrat : null;
+        mysqli_stmt_bind_param($stmt, 'iiii', $idReclamation, $idClient, $idContratBind, $idContratBind);
     }
     if (!mysqli_stmt_execute($stmt)) {
         $erreur = mysqli_stmt_error($stmt);
@@ -146,22 +148,23 @@ function bd_reclamation_trouver($idReclamation, $idClient = null)
     return $ligne ?: null;
 }
 
-function bd_reclamation_creer($idClient, $idFacture, $type, $autreMotif, $description)
+function bd_reclamation_creer($idClient, $idFacture, $type, $autreMotif, $description, $idContrat = null)
 {
     $link = Connexion();
     $reference = 'REC-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(4)));
     $stmt = mysqli_prepare(
         $link,
         "INSERT INTO reclamations
-            (reference_reclamation, id_client, id_facture, type_reclamation, autre_motif, description)
-         VALUES (?, ?, ?, ?, ?, ?)"
+            (reference_reclamation, id_client, id_facture, id_contrat, type_reclamation, autre_motif, description)
+         VALUES (?, ?, ?, ?, ?, ?, ?)"
     );
     if (!$stmt) {
         throw new RuntimeException("Impossible de préparer la création de la réclamation : " . mysqli_error($link));
     }
     $idClient = (int) $idClient;
     $idFacture = $idFacture === null ? null : (int) $idFacture;
-    mysqli_stmt_bind_param($stmt, 'siisss', $reference, $idClient, $idFacture, $type, $autreMotif, $description);
+    $idContrat = $idContrat === null ? null : (int) $idContrat;
+    mysqli_stmt_bind_param($stmt, 'siiisss', $reference, $idClient, $idFacture, $idContrat, $type, $autreMotif, $description);
     if (!mysqli_stmt_execute($stmt)) {
         $erreur = mysqli_stmt_error($stmt);
         mysqli_stmt_close($stmt);

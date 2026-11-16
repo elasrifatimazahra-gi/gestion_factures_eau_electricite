@@ -31,6 +31,7 @@ $menuFournisseur = [
     ['Tableau de bord', BASE_URL . 'Auth/accueil', 'tableau', 'Auth'],
     ['Clients', BASE_URL . 'Client/index', 'clients', 'Client'],
     ['Quartiers', BASE_URL . 'Quartier/index', 'calendrier', 'Quartier'],
+    ['Contrats', BASE_URL . 'Contrat/index', 'calendrier', 'Contrat'],
     ['Agents', BASE_URL . 'Agent/index', 'clients', 'Agent'],
     ['Import annuel', BASE_URL . 'Import/index', 'journal', 'Import'],
     ['Anomalies', BASE_URL . 'Anomalie/index', 'anomalie', 'Anomalie'],

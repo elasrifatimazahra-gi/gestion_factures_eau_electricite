@@ -25,7 +25,10 @@ $statutsLibelles = ['OUVERTE' => 'Ouverte', 'EN_COURS' => 'En cours', 'TRAITEE' 
     <div class="principal">
         <header class="topbar">
             <div class="statut-portail"><span class="point-vert"></span> Amanor opérationnel</div>
-            <div class="topbar-droite"><a class="deconnexion" href="<?= BASE_URL ?>Auth/logout">Déconnexion</a></div>
+            <div class="topbar-droite">
+                <?php include ROOT . 'IHM/client/selecteur_contrat.php'; ?>
+                <a class="deconnexion" href="<?= BASE_URL ?>Auth/logout">Déconnexion</a>
+            </div>
         </header>
         <main class="contenu m1-page">
             <h1>Mes réclamations</h1>
