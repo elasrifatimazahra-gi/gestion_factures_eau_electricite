@@ -17,6 +17,7 @@ DROP TABLE IF EXISTS `notifications`;
 DROP TABLE IF EXISTS `coupures_services`;
 DROP TABLE IF EXISTS `sanctions`;
 DROP TABLE IF EXISTS `controle_annuel`;
+DROP TABLE IF EXISTS `reclamation_messages`;
 DROP TABLE IF EXISTS `reclamations`;
 DROP TABLE IF EXISTS `paiements`;
 DROP TABLE IF EXISTS `factures`;
@@ -317,6 +318,18 @@ CREATE TABLE `reclamations` (
     FOREIGN KEY (`id_client`) REFERENCES `clients`(`id_client`) ON DELETE CASCADE,
     FOREIGN KEY (`id_facture`) REFERENCES `factures`(`id_facture`) ON DELETE SET NULL,
     FOREIGN KEY (`traite_par`) REFERENCES `utilisateurs`(`id_utilisateur`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `reclamation_messages` (
+    `id_message` INT AUTO_INCREMENT PRIMARY KEY,
+    `id_reclamation` INT NOT NULL,
+    `id_auteur` INT NULL,
+    `role_auteur` ENUM('CLIENT', 'FOURNISSEUR') NOT NULL,
+    `message` TEXT NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY `idx_reclamation_messages_conversation` (`id_reclamation`, `created_at`),
+    FOREIGN KEY (`id_reclamation`) REFERENCES `reclamations`(`id_reclamation`) ON DELETE CASCADE,
+    FOREIGN KEY (`id_auteur`) REFERENCES `utilisateurs`(`id_utilisateur`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================================================

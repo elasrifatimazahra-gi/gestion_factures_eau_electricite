@@ -7,6 +7,8 @@
 $prenom = $client['prenom'] ?? '';
 $nom = $client['nom'] ?? '';
 $initiales = mb_strtoupper(mb_substr($prenom, 0, 1) . mb_substr($nom, 0, 1));
+require_once ROOT . 'BD/Tableau_bord.php';
+$contratsClient = bd_tableau_contrats_client((int) ($_SESSION['id_client'] ?? 0));
 
 $jours = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
 $moisFr = [1 => 'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
@@ -53,7 +55,7 @@ $menu = [
     ['Ma déclaration',    BASE_URL . 'Consommation/declaration', 'jauge',   false],
     ['Mes factures',      BASE_URL . 'Facture/liste',             'facture', false],
     ['Paiement en ligne', '#',                                    'carte',   false],
-    ['Mes réclamations',  '#',                                    'message', false],
+    ['Mes réclamations',  BASE_URL . 'Reclamation/liste',         'message', false],
     ['Notifications',     BASE_URL . 'Notification/liste',        'cloche',  false],
 ];
 
@@ -259,6 +261,36 @@ $conseils = [
                         <div class="stat-note">Aucune facture à payer.</div>
                     <?php endif; ?>
                     <a class="lien-vert" href="<?= BASE_URL ?>Facture/liste">Voir le détail <?= $ico('chevron') ?></a>
+                </div>
+            </section>
+
+            <section class="carte carte-factures">
+                <div class="carte-entete carte-entete-pad">
+                    <div>
+                        <h2>Mes contrats</h2>
+                        <p class="carte-sous">Indicateurs distincts pour chacun de vos contrats</p>
+                    </div>
+                </div>
+                <div class="clients-table-scroll">
+                    <table>
+                        <thead><tr><th>Contrat</th><th>Quartier</th><th>Statut</th><th>Dernière consommation</th><th>Factures impayées</th><th>Solde</th></tr></thead>
+                        <tbody>
+                        <?php if (!$contratsClient): ?>
+                            <tr><td class="vide" colspan="6">Aucun contrat enregistré.</td></tr>
+                        <?php else: foreach ($contratsClient as $contrat): ?>
+                            <tr>
+                                <td class="fort"><?= htmlspecialchars($contrat['numero_contrat']) ?></td>
+                                <td><?= htmlspecialchars($contrat['quartier']) ?></td>
+                                <td><?= htmlspecialchars($contrat['statut']) ?></td>
+                                <td><?= $contrat['derniere_eau'] === null && $contrat['derniere_electricite'] === null
+                                    ? '—'
+                                    : (int) $contrat['derniere_eau'] . ' m³ / ' . (int) $contrat['derniere_electricite'] . ' kWh' ?></td>
+                                <td><?= (int) $contrat['factures_impayees'] ?></td>
+                                <td><?= $dh($contrat['solde_impaye']) ?> DH</td>
+                            </tr>
+                        <?php endforeach; endif; ?>
+                        </tbody>
+                    </table>
                 </div>
             </section>
 

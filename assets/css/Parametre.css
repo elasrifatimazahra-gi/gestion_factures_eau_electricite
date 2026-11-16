@@ -132,6 +132,91 @@
 .m1-notification__footer { color: var(--text-muted, #7a8780); font-size: 12px; }
 .m1-notification__footer form { margin: 0; }
 .m1-read-label { color: #407454; font-weight: 600; }
+.m1-reclamation-card > h2 { margin: 0 0 20px; font-size: 18px; }
+.m1-reclamation-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 20px;
+}
+.m1-reclamation-form .field__input {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  padding: 0 14px;
+  color: var(--texte, #14241d);
+  background: #fff;
+  border: 1px solid var(--bord, #e3e8e5);
+  border-radius: 10px;
+  font: 400 14px var(--font, Inter, sans-serif);
+}
+.m1-reclamation-form .field__input:hover { border-color: #cbd6d0; }
+.m1-reclamation-form .field__input:focus {
+  outline: 0;
+  border-color: var(--vert-bouton, #173f2f);
+  box-shadow: 0 0 0 3px rgba(23, 63, 47, .12);
+}
+.m1-reclamation-form textarea.field__input {
+  height: auto;
+  min-height: 140px;
+  padding: 12px 14px;
+  font: 400 14px var(--font, Inter, sans-serif);
+  resize: vertical;
+}
+.m1-reclamation-form__description,
+.m1-reclamation-form__actions { grid-column: 1 / -1; }
+.m1-reclamation-form__actions { margin-top: 0; }
+.reclamation-conversation {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 18px;
+  background: #f7f9f8;
+  border: 1px solid #e3e8e5;
+  border-radius: 12px;
+}
+.reclamation-conversation > h3 { margin: 0 0 2px; font-size: 15px; }
+.reclamation-message {
+  width: fit-content;
+  max-width: min(85%, 680px);
+  padding: 11px 14px;
+  border: 1px solid #e2e8e4;
+  border-radius: 12px;
+  background: #fff;
+  overflow-wrap: anywhere;
+}
+.reclamation-message--client { justify-self: start; }
+.reclamation-message--fournisseur {
+  justify-self: end;
+  background: #e8f4ec;
+  border-color: #d3e8da;
+}
+.reclamation-message__meta {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 6px;
+  color: #52625b;
+  font-size: 11px;
+}
+.reclamation-message__meta time { color: #7a8780; }
+.reclamation-message > p { margin: 0; color: #26372f; font-size: 13px; line-height: 1.55; }
+.m1-reclamation-reply { display: grid; gap: 12px; margin-top: 16px; }
+.m1-reclamation-reply .field__label { font-size: 13px; font-weight: 600; }
+.m1-reclamation-reply textarea.field__input {
+  width: 100%;
+  height: auto;
+  min-height: 96px;
+  padding: 12px 14px;
+  color: #14241d;
+  background: #fff;
+  border: 1px solid #e3e8e5;
+  border-radius: 10px;
+  font: 400 14px var(--font, Inter, sans-serif);
+  resize: vertical;
+}
+.m1-reclamation-reply .m1-button { justify-self: start; }
+.reclamation-conversation__closed { margin-top: 14px; color: #68766f; font-size: 13px; }
 .m1-bell { text-decoration: none; }
 .m1-bell::after { display: none; }
 .m1-bell-count {
@@ -149,4 +234,10 @@
   .m1-filters > * { flex: 1 1 140px; }
   .m1-filters .m1-button { flex: 0 0 auto; }
   .m1-notification__heading, .m1-notification__footer { align-items: flex-start; }
+  .m1-reclamation-form { grid-template-columns: 1fr; gap: 14px; }
+  .m1-reclamation-form__description,
+  .m1-reclamation-form__actions { grid-column: auto; }
+  .m1-reclamation-form__actions { justify-content: flex-start; }
+  .reclamation-conversation { padding: 12px; }
+  .reclamation-message { max-width: 95%; }
 }

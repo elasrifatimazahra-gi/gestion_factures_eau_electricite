@@ -28,7 +28,7 @@ $menu = [
     ['Ma déclaration',    BASE_URL . 'Consommation/declaration', 'jauge',   'Consommation/declaration'],
     ['Mes factures',      BASE_URL . 'Facture/liste',             'facture', 'Facture/liste'],
     ['Paiement en ligne', '#',                                    'carte',   ''],
-    ['Mes réclamations',  '#',                                    'message', ''],
+    ['Mes réclamations',  BASE_URL . 'Reclamation/liste',         'message', 'Reclamation/liste'],
     ['Notifications',     BASE_URL . 'Notification/liste',        'cloche',  'Notification/liste'],
 ];
 ?>

@@ -4,6 +4,8 @@
 
 $email = $infosFournisseur['email'] ?? ($infosFournisseur['identifiant'] ?? '');
 $initiales = strtoupper(substr($email !== '' ? $email : 'AD', 0, 2));
+require_once ROOT . 'BD/Tableau_bord.php';
+$statistiquesQuartiers = bd_tableau_statistiques_quartiers();
 
 $icones = [
     'tableau'  => '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
@@ -32,10 +34,10 @@ $menu = [
     ['Quartiers',       BASE_URL . 'Quartier/index', 'calendrier', false, true],
     ['Agents',          BASE_URL . 'Agent/index',    'clients',    false, true],
     ['Anomalies',       BASE_URL . 'Anomalie/index', 'anomalie',   false, true],
-    ['Réclamations',    '#',                         'message',    false, false],
+    ['Réclamations',    BASE_URL . 'Reclamation/index', 'message', false, true],
     ['Paiements',       '#',                         'carte',      false, false],
     ['Coupures',        '#',                         'eclair',     false, false],
-    ['Sanctions',       '#',                         'bouclier',   false, false],
+    ['Sanctions',       BASE_URL . 'Sanction/index', 'bouclier', false, true],
     ['Contrôle annuel', BASE_URL . 'Controle/index', 'calendrier', false, true],
     ['Paramètres',      BASE_URL . 'Parametre/index', 'reglages',   false, true],
     ['Journal',         BASE_URL . 'Journal/index',   'journal',    false, true],
@@ -134,6 +136,28 @@ $statuts = [
                         <span class="clients-resume__badge clients-resume__badge--ambre"><?= number_format((float) $statistiquesClients['montant_retard'], 2, ',', ' ') ?> DH</span>
                         <strong><?= number_format((int) $statistiquesClients['retards'], 0, ',', ' ') ?></strong>
                     </div>
+                </div>
+            </section>
+
+            <section class="dash-carte fournisseur-table-card">
+                <div class="dash-entete"><h2 class="dash-titre">Indicateurs par quartier</h2></div>
+                <div class="clients-table-scroll">
+                    <table class="dash-tableau">
+                        <thead><tr><th>Quartier</th><th>Contrats</th><th>Clients</th><th>Factures impayées</th><th>Montant restant</th></tr></thead>
+                        <tbody>
+                        <?php if (!$statistiquesQuartiers): ?>
+                            <tr><td class="vide" colspan="5">Aucun contrat enregistré.</td></tr>
+                        <?php else: foreach ($statistiquesQuartiers as $quartier): ?>
+                            <tr>
+                                <td><?= htmlspecialchars($quartier['quartier']) ?></td>
+                                <td><?= (int) $quartier['contrats'] ?></td>
+                                <td><?= (int) $quartier['clients'] ?></td>
+                                <td><?= (int) $quartier['factures_impayees'] ?></td>
+                                <td><?= number_format((float) $quartier['montant_impaye'], 2, ',', ' ') ?> DH</td>
+                            </tr>
+                        <?php endforeach; endif; ?>
+                        </tbody>
+                    </table>
                 </div>
             </section>
 

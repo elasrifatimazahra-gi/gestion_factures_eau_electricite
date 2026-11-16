@@ -55,6 +55,27 @@ function bd_tableau_statistiques_clients()
     return mysqli_fetch_assoc($res);
 }
 
+/** Indicateurs des contrats regroupés par quartier, y compris les contrats sans quartier. */
+function bd_tableau_statistiques_quartiers()
+{
+    $link = Connexion();
+    $sql = "SELECT q.id_quartier, COALESCE(q.nom, 'Non affecté') AS quartier,
+                   COUNT(DISTINCT ct.id_contrat) AS contrats,
+                   COUNT(DISTINCT ct.id_client) AS clients,
+                   COUNT(DISTINCT CASE WHEN f.statut IN ('IMPAYEE', 'EN_RETARD') THEN f.id_facture END) AS factures_impayees,
+                   COALESCE(SUM(CASE WHEN f.statut IN ('IMPAYEE', 'EN_RETARD') THEN f.reste_a_payer ELSE 0 END), 0) AS montant_impaye
+            FROM contrats ct
+            LEFT JOIN quartiers q ON q.id_quartier = ct.id_quartier
+            LEFT JOIN factures f ON f.id_contrat = ct.id_contrat
+            GROUP BY q.id_quartier, q.nom
+            ORDER BY q.nom IS NULL, q.nom";
+    $res = mysqli_query($link, $sql);
+    if (!$res) {
+        throw new RuntimeException("Impossible de récupérer les statistiques par quartier : " . mysqli_error($link));
+    }
+    return mysqli_fetch_all($res, MYSQLI_ASSOC);
+}
+
 /** Les dernières factures émises, avec le nom du client. */
 function bd_tableau_dernieres_factures($limite = 5)
 {
@@ -100,4 +121,52 @@ function bd_tableau_consommations_client($idClient, $nb = 6)
                                 LIMIT $nb");
     $lignes = $res ? mysqli_fetch_all($res, MYSQLI_ASSOC) : [];
     return array_reverse($lignes);
+}
+
+/** Dernière consommation connue et solde impayé de chacun des contrats d'un client. */
+function bd_tableau_contrats_client($idClient)
+{
+    $link = Connexion();
+    $stmt = mysqli_prepare(
+        $link,
+        "SELECT ct.id_contrat, ct.numero_contrat, ct.statut,
+                COALESCE(q.nom, 'Non affecté') AS quartier,
+                (SELECT co.conso_eau
+                 FROM consommations co
+                 WHERE co.id_contrat = ct.id_contrat
+                   AND co.statut IN ('VALIDE', 'REGULARISEE')
+                 ORDER BY co.annee DESC, co.mois DESC, co.id_conso DESC
+                 LIMIT 1) AS derniere_eau,
+                (SELECT co.conso_elec
+                 FROM consommations co
+                 WHERE co.id_contrat = ct.id_contrat
+                   AND co.statut IN ('VALIDE', 'REGULARISEE')
+                 ORDER BY co.annee DESC, co.mois DESC, co.id_conso DESC
+                 LIMIT 1) AS derniere_electricite,
+                (SELECT COUNT(*)
+                 FROM factures f
+                 WHERE f.id_contrat = ct.id_contrat
+                   AND f.statut IN ('IMPAYEE', 'EN_RETARD')) AS factures_impayees,
+                (SELECT COALESCE(SUM(f.reste_a_payer), 0)
+                 FROM factures f
+                 WHERE f.id_contrat = ct.id_contrat
+                   AND f.statut IN ('IMPAYEE', 'EN_RETARD')) AS solde_impaye
+         FROM contrats ct
+         LEFT JOIN quartiers q ON q.id_quartier = ct.id_quartier
+         WHERE ct.id_client = ?
+         ORDER BY ct.statut = 'ACTIF' DESC, ct.numero_contrat"
+    );
+    if (!$stmt) {
+        throw new RuntimeException("Impossible de préparer les indicateurs des contrats : " . mysqli_error($link));
+    }
+    $idClient = (int) $idClient;
+    mysqli_stmt_bind_param($stmt, 'i', $idClient);
+    if (!mysqli_stmt_execute($stmt)) {
+        $erreur = mysqli_stmt_error($stmt);
+        mysqli_stmt_close($stmt);
+        throw new RuntimeException("Impossible de récupérer les indicateurs des contrats : " . $erreur);
+    }
+    $contrats = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+    mysqli_stmt_close($stmt);
+    return $contrats;
 }

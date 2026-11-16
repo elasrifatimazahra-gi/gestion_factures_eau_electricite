@@ -465,6 +465,36 @@ body {
 .anomalie-form .btn { justify-self: start; margin-top: 8px; }
 .anomalie-action-card > p { margin-bottom: 14px; }
 
+/* ---------- Formulaire des sanctions ---------- */
+.sanction-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 20px;
+}
+.sanction-form .field { min-width: 0; }
+.sanction-form .field__label { font-size: 13px; font-weight: 600; }
+.sanction-form .field__input { width: 100%; min-width: 0; }
+.sanction-form__actions { grid-column: 1 / -1; }
+.sanction-form__actions .btn { margin-top: 2px; }
+
+/* ---------- Réponse aux réclamations ---------- */
+.reclamation-reponse-form {
+  display: grid;
+  gap: 14px;
+  width: 100%;
+}
+.reclamation-reponse-form .field { width: 100%; }
+.reclamation-reponse-form .field__label { font-size: 13px; font-weight: 600; }
+.reclamation-reponse-form .field__input { width: 100%; }
+.reclamation-reponse-form textarea.field__input {
+  height: auto;
+  min-height: 150px;
+  padding: 12px 14px;
+  font: 400 14px var(--font, Inter, sans-serif);
+  resize: vertical;
+}
+.reclamation-reponse-form__actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
 /* ---------- Accessibilité ---------- */
 :focus-visible { outline: 2px solid var(--green-700); outline-offset: 2px; }
 
@@ -487,6 +517,8 @@ body {
   .actions-formulaire-client { grid-column: auto; flex-wrap: wrap; }
   .formulaire-client-carte { padding: 20px; }
   .anomalie-photos { grid-template-columns: 1fr; }
+  .sanction-form { grid-template-columns: 1fr; gap: 14px; }
+  .sanction-form__actions { grid-column: auto; }
   .anomalie-table-scroll { margin: 18px -18px -18px; }
 }
 
