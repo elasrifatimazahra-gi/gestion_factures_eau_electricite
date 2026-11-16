@@ -48,6 +48,9 @@ $totaux = [
 if ((float) ($facture['montant_regularisation'] ?? 0) != 0) {
     $totaux[] = ['Estimations déjà facturées', 'التقديرات المفوترة سابقًا', '- ' . $dh(abs($facture['montant_regularisation'])), ''];
 }
+if ((float) $facture['credit_deduit'] > 0) {
+    $totaux[] = ['Crédit déduit', 'الرصيد المخصوم', '- ' . $dh($facture['credit_deduit']), ''];
+}
 if ($facture['penalite_appliquee']) {
     $totaux[] = ['Pénalité de retard', 'غرامة التأخير', $dh($facture['penalite_retard']), 'penalite'];
 }
