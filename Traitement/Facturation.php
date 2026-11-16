@@ -7,6 +7,7 @@ require_once ROOT . 'BD/Parametre.php';
 require_once ROOT . 'BD/Controle.php';
 require_once ROOT . 'BD/Consommation.php';   // enregistrer(), index précédent
 require_once ROOT . 'BD/Journal.php';
+require_once ROOT . 'BD/Notification.php';
 
 /**
  * Montant HT d'un fluide. Le prix de la tranche s'applique à TOUTE la consommation
@@ -154,17 +155,71 @@ function genererFacture($idConso)
  * RG33 : pénalité de retard = 5 % du TTC, minimum 15 DH, appliquée une seule fois.
  * Retourne le nombre de factures pénalisées.
  */
+// ===== ÉTAPE 2 - Traitement/Facturation.php =====
+// (a) En haut du fichier, avec les autres require_once, ajouter cette ligne :
+//        require_once ROOT . 'BD/Notification.php';
+//
+// (b) REMPLACER toute l'ancienne fonction appliquerPenalites() par les deux fonctions ci-dessous.
+//     Les appels existants dans Traitement/Facture.php (appliquerPenalites();) continuent de marcher.
+
+/**
+ * Applique les pénalités de retard (RG33) et retourne le NOMBRE de factures pénalisées.
+ * (Même retour qu'avant : Facture_liste et Facture_detail n'ont rien à changer.)
+ */
 function appliquerPenalites()
+{
+    return count(appliquerPenalitesDetail());
+}
+
+/**
+ * Applique les pénalités de retard et retourne la LISTE des factures pénalisées par cet appel.
+ * Chaque élément : id_facture, numero_facture, id_client, id_contrat, numero_contrat, montant_ttc,
+ * date_echeance, id_utilisateur_client + penalite (montant appliqué).
+ * Pour chaque facture : pénalité appliquée une seule fois, ligne dans le journal (utilisateur NULL =
+ * action du système), notification RETARD_PAIEMENT au client.
+ * Traitement/Rappel.php (étape 4) réutilise cette liste.
+ */
+function appliquerPenalitesDetail()
 {
     $taux = (float) lireParametre('PENALITE_RETARD_POURCENT', 5);
     $minimum = (float) lireParametre('PENALITE_RETARD_MINIMUM_DH', 15);
-    $nb = 0;
-    foreach (bd_facture_a_penaliser() as $f) {
+    $penalisees = [];
+
+    foreach (bd_facture_a_penaliser_detail() as $f) {
         $penalite = max(round((float) $f['montant_ttc'] * $taux / 100, 2), $minimum);
-        bd_facture_appliquer_penalite($f['id_facture'], $penalite);
-        $nb++;
+        if (!bd_facture_appliquer_penalite_unique($f['id_facture'], $penalite)) {
+            continue;   // déjà pénalisée par un autre appel
+        }
+        $f['penalite'] = $penalite;
+        $penalisees[] = $f;
+
+        // Journal et notification : un échec ne doit jamais bloquer l'affichage de la page client
+        try {
+            bd_journal_enregistrer(
+                null,
+                'PENALITE_RETARD',
+                'factures',
+                (int) $f['id_facture'],
+                'Pénalité de retard de ' . number_format($penalite, 2, '.', '') . ' DH appliquée à la facture '
+                    . $f['numero_facture'] . ' (échéance ' . $f['date_echeance'] . ')'
+            );
+            if (!empty($f['id_utilisateur_client'])) {
+                bd_notification_creer(
+                    (int) $f['id_utilisateur_client'],
+                    'Pénalité de retard',
+                    'La facture ' . $f['numero_facture']
+                        . (!empty($f['numero_contrat']) ? ' (contrat ' . $f['numero_contrat'] . ')' : '')
+                        . ' n\'a pas été réglée avant le ' . date('d/m/Y', strtotime($f['date_echeance']))
+                        . '. Une pénalité de retard de ' . number_format($penalite, 2, ',', ' ')
+                        . ' DH a été ajoutée au montant à payer.',
+                    'RETARD_PAIEMENT'
+                );
+            }
+        } catch (Throwable $e) {
+            // on garde la pénalité appliquée ; seule la trace (journal/notification) est perdue
+        }
     }
-    return $nb;
+    return $penalisees;
 }
 
 /* ------------------------------------------------------------------

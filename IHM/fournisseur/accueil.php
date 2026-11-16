@@ -2,6 +2,10 @@
 // Variables reçues de Auth_accueil() :
 // $statistiquesClients, $dernieresFactures, $infosFournisseur
 
+if (!isset($statistiquesClients) || !is_array($statistiquesClients)) {
+    throw new LogicException('Les statistiques clients doivent être fournies par Auth_accueil().');
+}
+
 $email = $infosFournisseur['email'] ?? ($infosFournisseur['identifiant'] ?? '');
 $initiales = strtoupper(substr($email !== '' ? $email : 'AD', 0, 2));
 require_once ROOT . 'BD/Tableau_bord.php';
@@ -34,10 +38,10 @@ $menu = [
     ['Quartiers',       BASE_URL . 'Quartier/index', 'calendrier', false, true],
     ['Agents',          BASE_URL . 'Agent/index',    'clients',    false, true],
     ['Anomalies',       BASE_URL . 'Anomalie/index', 'anomalie',   false, true],
-    ['Réclamations',    BASE_URL . 'Reclamation/index', 'message', false, true],
-    ['Paiements',       '#',                         'carte',      false, false],
-    ['Coupures',        '#',                         'eclair',     false, false],
-    ['Sanctions',       BASE_URL . 'Sanction/index', 'bouclier', false, true],
+    ['Réclamations',    BASE_URL . 'Reclamation/index', 'message',   false, true],
+    ['Paiements',       BASE_URL . 'Paiement/index',    'carte',     false, true],
+    ['Coupures',        BASE_URL . 'Coupure/index',     'eclair',    false, true],
+    ['Sanctions',       BASE_URL . 'Sanction/index',    'bouclier',  false, true],
     ['Contrôle annuel', BASE_URL . 'Controle/index', 'calendrier', false, true],
     ['Paramètres',      BASE_URL . 'Parametre/index', 'reglages',   false, true],
     ['Journal',         BASE_URL . 'Journal/index',   'journal',    false, true],

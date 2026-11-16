@@ -71,12 +71,24 @@ function bd_journal_lister(array $filtres = [], $limite = 200)
         $valeurs[] = $filtres['date_fin'];
     }
 
-    $sql = "SELECT j.id_log, j.action_type, j.table_concernee, j.id_entite, j.description,
-                   j.ancienne_valeur, j.nouvelle_valeur, j.adresse_ip, j.date_action,
-                   u.identifiant, u.role
+// ===== BD/Journal.php : dans bd_journal_lister(), REMPLACER le bloc $sql = "SELECT ... LEFT JOIN utilisateurs ..."; par : =====
+// (le reste de la fonction ne change pas ; la colonne adresse_ip reste enregistrée en base mais n'est plus affichée)
+
+ 
+    $agentsLies = bd_journal_colonne_existe('agents', 'id_utilisateur');
+    $nomAgent = $agentsLies ? "CONCAT(ag.nom, ' ', ag.prenom)" : 'NULL';
+    $jointureAgents = $agentsLies ? 'LEFT JOIN agents ag ON ag.id_utilisateur = j.id_utilisateur' : '';
+ 
+    $sql = "SELECT j.id_log, j.id_utilisateur, j.action_type, j.table_concernee, j.id_entite, j.description,
+                   j.ancienne_valeur, j.nouvelle_valeur, j.date_action,
+                   u.identifiant, u.email, u.role,
+                   COALESCE(CONCAT(cl.nom, ' ', cl.prenom), $nomAgent) AS nom_complet
             FROM journal_actions j
-            LEFT JOIN utilisateurs u ON u.id_utilisateur = j.id_utilisateur";
-    if ($conditions) {
+            LEFT JOIN utilisateurs u ON u.id_utilisateur = j.id_utilisateur
+            LEFT JOIN clients cl ON cl.id_utilisateur = j.id_utilisateur
+            $jointureAgents";
+ 
+         if ($conditions) {
         $sql .= ' WHERE ' . implode(' AND ', $conditions);
     }
     $sql .= ' ORDER BY j.date_action DESC, j.id_log DESC LIMIT ?';
@@ -103,4 +115,13 @@ function bd_journal_lister(array $filtres = [], $limite = 200)
     $lignes = mysqli_fetch_all($resultat, MYSQLI_ASSOC);
     mysqli_stmt_close($stmt);
     return $lignes;
+}
+/** Vrai si la colonne existe dans la base (certaines bases n'ont pas agents.id_utilisateur). */
+function bd_journal_colonne_existe($table, $colonne)
+{
+    if (!preg_match('/^\w+$/', $table) || !preg_match('/^\w+$/', $colonne)) {
+        return false;
+    }
+    $resultat = mysqli_query(Connexion(), "SHOW COLUMNS FROM `$table` LIKE '$colonne'");
+    return $resultat && mysqli_num_rows($resultat) > 0;
 }
