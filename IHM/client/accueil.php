@@ -351,7 +351,7 @@ $conseils = [
                             <tr>
                                 <td class="fort"><?= htmlspecialchars($f['numero_facture']) ?></td>
                                 <td><?= htmlspecialchars(ucfirst($moisFr[(int) $f['periode_mois']]) . ' ' . (int) $f['periode_annee']) ?></td>
-                                <td class="fort"><?= $dh($f['montant_ttc']) ?> DH</td>
+                               <td class="fort"><?= $dh($f['montant_total_a_payer']) ?> DH</td>
                                 <td><?= htmlspecialchars($dateCourte($f['date_echeance'])) ?></td>
                                 <td><span class="badge <?= $classeStatut ?>"><?= htmlspecialchars($texteStatut) ?></span></td>
                                 <td><a class="oeil" href="<?= BASE_URL ?>Facture/detail/<?= (int) $f['id_facture'] ?>" aria-label="Voir la facture"><?= $ico('oeil') ?></a></td>
