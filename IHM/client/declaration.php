@@ -18,6 +18,7 @@
         <header class="topbar">
             <div class="statut-portail"><span class="point-vert"></span> Amanor opérationnel</div>
             <div class="topbar-droite">
+                <?php include ROOT . 'IHM/client/selecteur_contrat.php'; ?>
                 <a class="deconnexion" href="<?= BASE_URL ?>Auth/logout">Déconnexion</a>
             </div>
         </header>
@@ -46,21 +47,6 @@
                     <strong>Période fermée.</strong> La saisie ouvre le 18 du mois.
                 <?php endif; ?>
             </section>
-
-            <?php if ($contrats): ?>
-                <form class="saisie-contrat" method="get" action="<?= BASE_URL ?>Consommation/declaration">
-                    <label for="contrat">Contrat à déclarer</label>
-                    <select id="contrat" name="contrat" required>
-                        <option value="">Choisir un contrat</option>
-                        <?php foreach ($contrats as $contrat): ?>
-                            <option value="<?= (int) $contrat['id_contrat'] ?>" <?= (int) $contrat['id_contrat'] === (int) $idContrat ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($contrat['numero_contrat']) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <button type="submit">Afficher</button>
-                </form>
-            <?php endif; ?>
 
             <?php if ($contratSelectionne && !$dejaSaisi && $ouvert): ?>
             <form method="POST" action="<?= BASE_URL ?>Consommation/enregistrer" enctype="multipart/form-data">

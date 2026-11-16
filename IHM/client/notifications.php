@@ -19,6 +19,7 @@ $initiales = mb_strtoupper(mb_substr($prenom, 0, 1) . mb_substr($nom, 0, 1));
         <header class="topbar">
             <div class="statut-portail"><span class="point-vert"></span> Amanor opérationnel</div>
             <div class="topbar-droite">
+                <?php include ROOT . 'IHM/client/selecteur_contrat.php'; ?>
                 <a class="cloche m1-bell" href="<?= BASE_URL ?>Notification/liste" aria-label="Notifications non lues : <?= (int) $notificationsNonLues ?>">
                     <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
                     <?php if ($notificationsNonLues > 0): ?><span class="m1-bell-count"><?= (int) $notificationsNonLues ?></span><?php endif; ?>

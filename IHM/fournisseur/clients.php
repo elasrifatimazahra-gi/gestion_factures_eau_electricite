@@ -45,6 +45,7 @@ include ROOT . 'IHM/layouts/fournisseur_header.php';
                 <th>Numéro compteur électricité</th>
                 <th>Index initial eau</th>
                 <th>Index initial électricité</th>
+                <th>Contrats</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -79,9 +80,23 @@ include ROOT . 'IHM/layouts/fournisseur_header.php';
                     <td><?= htmlspecialchars($client['numero_compteur_elec']) ?></td>
                     <td><?= htmlspecialchars($client['index_initial_eau']) ?></td>
                     <td><?= htmlspecialchars($client['index_initial_elec']) ?></td>
+                    <td>
+                        <?php $contratsClient = bd_contrat_lister((int) $client['id_client']); ?>
+                        <?php if ($contratsClient): ?>
+                            <?php foreach (array_slice($contratsClient, 0, 2) as $contratClient): ?>
+                                <div><?= htmlspecialchars($contratClient['numero_contrat']) ?></div>
+                            <?php endforeach; ?>
+                            <?php if (count($contratsClient) > 2): ?>
+                                <small>+<?= count($contratsClient) - 2 ?> de plus</small>
+                            <?php endif; ?>
+                        <?php else: ?>
+                            <span class="clients-empty-small">Aucun</span>
+                        <?php endif; ?>
+                    </td>
                     <td class="clients-row-actions">
                         <a href="<?= BASE_URL ?>Client/modifier/<?= htmlspecialchars($client['id_client']) ?>" class="clients-action clients-action--edit">Modifier</a>
                         <a href="<?= BASE_URL ?>Client/changerMdp/<?= htmlspecialchars($client['id_client']) ?>" class="clients-action clients-action--password">Changer mot de passe</a>
+                        <a href="<?= BASE_URL ?>Contrat/ajouter/<?= htmlspecialchars($client['id_client']) ?>" class="clients-action clients-action--password">+ Ajouter contrat</a>
                         <?php if ($client['statut_compte'] !== 'ACTIF' || !empty($client['est_bloque'])) { ?>
                             <a href="<?= BASE_URL ?>Client/debloquer/<?= htmlspecialchars($client['cin']) ?>" class="clients-action clients-action--unlock">Débloquer</a>
                         <?php } ?>
@@ -90,7 +105,7 @@ include ROOT . 'IHM/layouts/fournisseur_header.php';
             <?php 
                 }
             } else {
-                echo "<tr><td class='clients-empty' colspan='12'>Aucun client trouvé.</td></tr>";
+                echo "<tr><td class='clients-empty' colspan='13'>Aucun client trouvé.</td></tr>";
             } 
             ?>
         </tbody>

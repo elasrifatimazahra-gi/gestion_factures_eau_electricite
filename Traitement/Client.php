@@ -1,4 +1,5 @@
 <?php require_once 'BD/Client.php';
+require_once 'BD/Contrat.php';
 require_once 'BD/Utilisateur.php';
 require_once ROOT . 'Traitement/Auth.php';
     function Client_index()

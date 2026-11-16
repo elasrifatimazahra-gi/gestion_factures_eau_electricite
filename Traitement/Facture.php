@@ -25,19 +25,11 @@ function facture_nom_mois($mois)
     return $noms[(int) $mois] ?? '';
 }
 
-/**
- * Contrat dont on affiche les factures : celui choisi à la connexion ($_SESSION['id_contrat']).
- * On vérifie qu'il appartient bien au client connecté.
- * Secours (tant que le choix du contrat n'est pas en place) : le premier contrat du client.
- * Retourne null si le client n'a aucun contrat.
- */
+/** Contrat actuellement sélectionné par le client, ou null s'il n'en possède aucun. */
 function facture_contrat_courant($idClient)
 {
-    $idContrat = (int) ($_SESSION['id_contrat'] ?? 0);
-    if ($idContrat > 0 && bd_facture_infos_contrat($idContrat, $idClient)) {
-        return $idContrat;
-    }
-    return bd_facture_premier_contrat($idClient);
+    $contrat = auth_exiger_contrat($idClient);
+    return $contrat ? (int) $contrat['id_contrat'] : null;
 }
 
 function facture_libelle_statut($statut)

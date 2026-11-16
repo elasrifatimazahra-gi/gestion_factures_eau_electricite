@@ -101,11 +101,8 @@ function Consommation_declaration($param = null)
     $idClient = consommation_id_client();
 
     $contrats = bd_consommation_contrats_client($idClient);
-    $idContratFiltre = filter_var($_GET['contrat'] ?? null, FILTER_VALIDATE_INT);
-    $idContrat = $idContratFiltre !== false ? (int) $idContratFiltre : 0;
-    if ($idContrat === 0 && count($contrats) === 1) {
-        $idContrat = (int) $contrats[0]['id_contrat'];
-    }
+    $contratCourant = auth_exiger_contrat($idClient);
+    $idContrat = $contratCourant ? (int) $contratCourant['id_contrat'] : 0;
     $contratSelectionne = null;
     foreach ($contrats as $contrat) {
         if ((int) $contrat['id_contrat'] === $idContrat) {
@@ -113,12 +110,6 @@ function Consommation_declaration($param = null)
             break;
         }
     }
-    if ($idContrat > 0 && $contratSelectionne === null) {
-        http_response_code(404);
-        include ROOT . 'IHM/404.php';
-        return;
-    }
-
     $prec = $contratSelectionne
         ? bd_consommation_index_precedent_contrat($idContrat, (int) date('Y'), (int) date('n'))
         : ['eau' => 0, 'elec' => 0];
@@ -163,7 +154,10 @@ function Consommation_enregistrer($param = null)
 
     $idClient = consommation_id_client();
     $idContrat = filter_var($_POST['id_contrat'] ?? null, FILTER_VALIDATE_INT);
-    if (!$idContrat || !bd_consommation_contrat_client((int) $idContrat, $idClient)) {
+    $contratCourant = auth_exiger_contrat($idClient);
+    if (!$idContrat || !$contratCourant
+        || (int) $idContrat !== (int) $contratCourant['id_contrat']
+        || !bd_consommation_contrat_client((int) $idContrat, $idClient)) {
         consommation_retour('Veuillez choisir un contrat actif qui vous appartient.');
     }
     $annee = (int) date('Y');

@@ -307,6 +307,7 @@ CREATE TABLE `reclamations` (
     `reference_reclamation` VARCHAR(50) NOT NULL UNIQUE,
     `id_client` INT NOT NULL,
     `id_facture` INT NULL,
+    `id_contrat` INT NULL,
     `type_reclamation` ENUM('FUITE_EXTERNE', 'FUITE_INTERNE', 'FACTURE', 'PROBLEME_COMPTEUR', 'COUPURE_INEXPLIQUEE', 'AUTRE') NOT NULL,
     `autre_motif` VARCHAR(255) NULL,
     `description` TEXT NOT NULL,
@@ -318,8 +319,10 @@ CREATE TABLE `reclamations` (
     `traite_par` INT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY `idx_reclamations_contrat` (`id_contrat`),
     FOREIGN KEY (`id_client`) REFERENCES `clients`(`id_client`) ON DELETE CASCADE,
     FOREIGN KEY (`id_facture`) REFERENCES `factures`(`id_facture`) ON DELETE SET NULL,
+    FOREIGN KEY (`id_contrat`) REFERENCES `contrats`(`id_contrat`) ON DELETE SET NULL,
     FOREIGN KEY (`traite_par`) REFERENCES `utilisateurs`(`id_utilisateur`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

@@ -9,6 +9,7 @@ require_once ROOT . 'Traitement/Auth.php';
 function Notification_liste($param = null)
 {
     exiger_role('CLIENT');
+    auth_exiger_contrat((int) ($_SESSION['id_client'] ?? 0));
     $idUtilisateur = (int) $_SESSION['id_utilisateur'];
     $notifications = bd_notification_lister($idUtilisateur);
     $client = bd_facture_infos_client((int) ($_SESSION['id_client'] ?? 0));
@@ -23,6 +24,7 @@ function Notification_liste($param = null)
 function Notification_lire($param = null)
 {
     exiger_role('CLIENT');
+    auth_exiger_contrat((int) ($_SESSION['id_client'] ?? 0));
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         rediriger('Notification/liste');
     }

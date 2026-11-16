@@ -102,18 +102,20 @@ function bd_tableau_infos_utilisateur($idUtilisateur)
 /* ===================== ESPACE CLIENT ===================== */
 
 /**
- * Les $nb derniers totaux mensuels valides d'un client, cumulés sur ses contrats.
+ * Les $nb derniers totaux mensuels valides, limités au contrat choisi si fourni.
  */
-function bd_tableau_consommations_client($idClient, $nb = 6)
+function bd_tableau_consommations_client($idClient, $nb = 6, $idContrat = null)
 {
     $link = Connexion();
     $idClient = (int) $idClient;
     $nb = (int) $nb;
+    $filtreContrat = $idContrat !== null ? ' AND id_contrat = ' . (int) $idContrat : '';
     $res = mysqli_query($link, "SELECT annee, mois,
                                        SUM(conso_eau) AS conso_eau,
                                        SUM(conso_elec) AS conso_elec
                                 FROM consommations
                                 WHERE id_client = $idClient
+                                  $filtreContrat
                                   AND statut IN ('VALIDE', 'REGULARISEE')
                                   AND conso_eau >= 0 AND conso_elec >= 0
                                 GROUP BY annee, mois
@@ -124,12 +126,15 @@ function bd_tableau_consommations_client($idClient, $nb = 6)
 }
 
 /** Dernière consommation connue et solde impayé de chacun des contrats d'un client. */
-function bd_tableau_contrats_client($idClient)
+function bd_tableau_contrats_client($idClient, $idContrat = null)
 {
     $link = Connexion();
+    $filtreContrat = $idContrat !== null ? ' AND ct.id_contrat = ?' : '';
     $stmt = mysqli_prepare(
         $link,
-        "SELECT ct.id_contrat, ct.numero_contrat, ct.statut,
+        "SELECT ct.id_contrat, ct.numero_contrat, ct.numero_compteur_eau,
+                ct.numero_compteur_elec, ct.index_initial_eau, ct.index_initial_elec,
+                ct.statut,
                 COALESCE(q.nom, 'Non affecté') AS quartier,
                 (SELECT co.conso_eau
                  FROM consommations co
@@ -153,14 +158,19 @@ function bd_tableau_contrats_client($idClient)
                    AND f.statut IN ('IMPAYEE', 'EN_RETARD')) AS solde_impaye
          FROM contrats ct
          LEFT JOIN quartiers q ON q.id_quartier = ct.id_quartier
-         WHERE ct.id_client = ?
+         WHERE ct.id_client = ?$filtreContrat
          ORDER BY ct.statut = 'ACTIF' DESC, ct.numero_contrat"
     );
     if (!$stmt) {
         throw new RuntimeException("Impossible de préparer les indicateurs des contrats : " . mysqli_error($link));
     }
     $idClient = (int) $idClient;
-    mysqli_stmt_bind_param($stmt, 'i', $idClient);
+    if ($idContrat !== null) {
+        $idContrat = (int) $idContrat;
+        mysqli_stmt_bind_param($stmt, 'ii', $idClient, $idContrat);
+    } else {
+        mysqli_stmt_bind_param($stmt, 'i', $idClient);
+    }
     if (!mysqli_stmt_execute($stmt)) {
         $erreur = mysqli_stmt_error($stmt);
         mysqli_stmt_close($stmt);
