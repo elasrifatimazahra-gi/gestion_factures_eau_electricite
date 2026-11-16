@@ -175,7 +175,6 @@ $conseils = [
         <header class="topbar">
             <div class="statut-portail"><span class="point-vert"></span> Amanor opérationnel</div>
             <div class="topbar-droite">
-                <div class="langues"><span class="actif">FR</span><span>AR</span></div>
                 <?php include ROOT . 'IHM/client/selecteur_contrat.php'; ?>
                 <a class="cloche m1-bell" href="<?= BASE_URL ?>Notification/liste" aria-label="Notifications non lues : <?= (int) ($notificationsNonLues ?? 0) ?>">
                     <?= $ico('cloche') ?>

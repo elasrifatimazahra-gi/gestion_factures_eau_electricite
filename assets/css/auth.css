@@ -76,22 +76,6 @@ a { color: inherit; }
     padding: 72px 40px 40px;
     background: #fff;
 }
-.langues {
-    position: absolute;
-    top: 14px;
-    right: 14px;
-    display: flex;
-    align-items: center;
-    padding: 4px;
-    border: 1px solid var(--bord);
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--gris);
-}
-.langues span { padding: 6px 10px; border-radius: 8px; }
-.langues .actif { background: #f1f5f3; color: var(--texte); }
-
 .auth-bloc { width: 100%; max-width: 400px; }
 .auth-etiquette {
     display: inline-block;
@@ -198,20 +182,18 @@ a { color: inherit; }
     box-shadow: 0 6px 16px rgba(0, 0, 0, .25);
 }
 
-/* ---------- Variante fournisseur : fond vert + carte blanche ---------- */
-.auth-fournisseur .auth-visuel { background: linear-gradient(160deg, #0a2f21 0%, #0f4a33 100%); }
-.auth-fournisseur .auth-formulaire { background: linear-gradient(160deg, #1b6b4a 0%, #166445 100%); }
-.auth-fournisseur .auth-bloc {
+/* ---------- Variante commune : fond vert + carte blanche ---------- */
+.auth-carte .auth-visuel { background: linear-gradient(160deg, #0a2f21 0%, #0f4a33 100%); }
+.auth-carte .auth-formulaire { background: linear-gradient(160deg, #1b6b4a 0%, #166445 100%); }
+.auth-carte .auth-bloc {
     max-width: 430px;
     padding: 36px 34px 30px;
     background: #fff;
     border-radius: 22px;
     box-shadow: 0 24px 60px rgba(0, 0, 0, .25);
 }
-.auth-fournisseur .auth-bloc h2 { font-size: 36px; }
-.auth-fournisseur .langues { border-color: rgba(255, 255, 255, .55); color: #fff; }
-.auth-fournisseur .langues .actif { background: rgba(255, 255, 255, .2); color: #fff; }
-.auth-fournisseur .auth-pied { margin-top: 18px; }
+.auth-carte .auth-bloc h2 { font-size: 36px; }
+.auth-carte .auth-pied { margin-top: 18px; }
 
 /* ---------- Petits écrans ---------- */
 @media (max-width: 880px) {
@@ -219,8 +201,8 @@ a { color: inherit; }
     .auth-visuel { padding: 20px 22px; }
     .auth-accroche, .auth-service { display: none; }
     .auth-formulaire { align-items: flex-start; padding: 56px 20px 40px; }
-    .auth-fournisseur .auth-formulaire { align-items: center; padding: 56px 16px 32px; }
-    .auth-bloc h2, .auth-fournisseur .auth-bloc h2 { font-size: 32px; }
+    .auth-carte .auth-formulaire { align-items: center; padding: 56px 16px 32px; }
+    .auth-bloc h2, .auth-carte .auth-bloc h2 { font-size: 32px; }
 }
 /* ---------- Pages d'erreur (accès refusé) ---------- */
 .page-erreur {
