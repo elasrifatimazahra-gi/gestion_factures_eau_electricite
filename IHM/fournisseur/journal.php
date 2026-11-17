@@ -48,12 +48,12 @@ $rolesLibelles = ['CLIENT' => 'Client', 'AGENT' => 'Agent', 'FOURNISSEUR' => 'Fo
         <table class="m1-table">
             <thead>
                 <tr>
-                    <th>Date</th><th>Utilisateur</th><th>Action</th><th>Élément</th><th>Description</th>
+                    <th>Date</th><th>Utilisateur</th><th>Client concerné</th><th>Action</th><th>Élément</th><th>Description</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (!$journal): ?>
-                    <tr><td class="m1-empty" colspan="5">Aucune action ne correspond à ces filtres.</td></tr>
+                    <tr><td class="m1-empty" colspan="6">Aucune action ne correspond à ces filtres.</td></tr>
                 <?php else: ?>
                     <?php foreach ($journal as $ligne): ?>
                         <tr>
@@ -70,6 +70,14 @@ $rolesLibelles = ['CLIENT' => 'Client', 'AGENT' => 'Agent', 'FOURNISSEUR' => 'Fo
                                     <strong><?= htmlspecialchars($ligne['identifiant']) ?></strong>
                                 <?php else: ?>
                                     Utilisateur supprimé
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php if (!empty($ligne['client_nom'])): ?>
+                                    <strong><?= htmlspecialchars($ligne['client_nom']) ?></strong><br>
+                                    <small><?= htmlspecialchars($ligne['client_numero']) ?></small>
+                                <?php else: ?>
+                                    —
                                 <?php endif; ?>
                             </td>
                             <td><span class="m4-tag <?= $classeAction($ligne['action_type']) ?>"><?= htmlspecialchars($ligne['action_type']) ?></span></td>

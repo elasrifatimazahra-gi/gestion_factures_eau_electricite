@@ -79,14 +79,29 @@ function bd_journal_lister(array $filtres = [], $limite = 200)
     $nomAgent = $agentsLies ? "CONCAT(ag.nom, ' ', ag.prenom)" : 'NULL';
     $jointureAgents = $agentsLies ? 'LEFT JOIN agents ag ON ag.id_utilisateur = j.id_utilisateur' : '';
  
+// ===== BD/Journal.php, dans bd_journal_lister() : REMPLACER le bloc $sql = "SELECT ... LEFT JOIN utilisateurs ..."; par ce bloc =====
+// Les LEFT JOIN fj, pj, cj, tj retrouvent le CLIENT CONCERNÉ à partir de table_concernee + id_entite.
+// (une seule modification, aucune fonction à ajouter ; $link est déjà défini au début de la fonction)
+
+    $verification = mysqli_query($link, "SHOW COLUMNS FROM `agents` LIKE 'id_utilisateur'");
+    $agentsLies = $verification && mysqli_num_rows($verification) > 0;
+    $nomAgent = $agentsLies ? "CONCAT(ag.nom, ' ', ag.prenom)" : 'NULL';
+    $jointureAgents = $agentsLies ? 'LEFT JOIN agents ag ON ag.id_utilisateur = j.id_utilisateur' : '';
+
     $sql = "SELECT j.id_log, j.id_utilisateur, j.action_type, j.table_concernee, j.id_entite, j.description,
                    j.ancienne_valeur, j.nouvelle_valeur, j.date_action,
                    u.identifiant, u.email, u.role,
-                   COALESCE(CONCAT(cl.nom, ' ', cl.prenom), $nomAgent) AS nom_complet
+                   COALESCE(CONCAT(cl.nom, ' ', cl.prenom), $nomAgent) AS nom_complet,
+                   cc.numero_client AS client_numero, CONCAT(cc.nom, ' ', cc.prenom) AS client_nom
             FROM journal_actions j
             LEFT JOIN utilisateurs u ON u.id_utilisateur = j.id_utilisateur
             LEFT JOIN clients cl ON cl.id_utilisateur = j.id_utilisateur
-            $jointureAgents";
+            $jointureAgents
+            LEFT JOIN factures fj ON j.table_concernee = 'factures' AND fj.id_facture = j.id_entite
+            LEFT JOIN paiements pj ON j.table_concernee = 'paiements' AND pj.id_paiement = j.id_entite
+            LEFT JOIN coupures_services cj ON j.table_concernee = 'coupures_services' AND cj.id_coupure = j.id_entite
+            LEFT JOIN contrats tj ON j.table_concernee = 'contrats' AND tj.id_contrat = j.id_entite
+            LEFT JOIN clients cc ON cc.id_client = COALESCE(fj.id_client, pj.id_client, cj.id_client, tj.id_client)";
  
          if ($conditions) {
         $sql .= ' WHERE ' . implode(' AND ', $conditions);

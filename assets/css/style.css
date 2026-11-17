@@ -298,3 +298,4 @@ h2 {
         flex-wrap: wrap;
     }
 }
+.rt__zeros { margin: 0 0 18px; padding: 9px 14px; border-radius: 10px; background: var(--rt-ok-bg); color: var(--rt-ok); font-size: .85rem; font-weight: 600; }

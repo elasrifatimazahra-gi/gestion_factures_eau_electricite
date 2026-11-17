@@ -7,6 +7,7 @@
 //   2. pénalités de retard
 //   3. alerte + coupure programmée pour les contrats à 3 mois impayés consécutifs
 //   4. alerte « mois non déclarés » (client notifié une fois par mois ; trace dans le journal)
+//   5. sanctions confirmées et non payées après la date limite : coupure programmée ; coupure annulée si la sanction est payée
 
 require_once ROOT . 'BD/Rappel.php';
 require_once ROOT . 'Traitement/Facturation.php';
@@ -37,6 +38,21 @@ function rappel_mois_non_declares_consecutifs($idContrat)
 }
 
 /**
+ * Contrat visé par une sanction : colonne id_contrat de la sanction, sinon contrat du contrôle annuel,
+ * sinon l'unique contrat actif du client. Retourne null si le contrat ne peut pas être déterminé.
+ */
+function rappel_contrat_de_la_sanction(array $sanction)
+{
+    foreach (['id_contrat_sanction', 'id_contrat_controle'] as $cle) {
+        if (!empty($sanction[$cle])) {
+            return (int) $sanction[$cle];
+        }
+    }
+    $contrats = bd_rappel_contrats_actifs_du_client($sanction['id_client']);
+    return count($contrats) === 1 ? (int) $contrats[0] : null;
+}
+
+/**
  * Exécute toutes les tâches et retourne un rapport :
  *   date, mois_estime, estimations (int), penalites (liste), coupures (liste), non_declares (liste), erreurs (liste)
  * Chaque étape est isolée : si l'une échoue, les autres s'exécutent quand même.
@@ -50,6 +66,9 @@ function rappel_executer_taches($idUtilisateur = null)
         'penalites'    => [],
         'coupures'     => [],
         'non_declares' => [],
+        'sanctions'    => [],
+        'sanctions_a_traiter' => [],
+        'sanctions_annulees'  => [],
         'erreurs'      => [],
     ];
 
@@ -122,12 +141,44 @@ function rappel_executer_taches($idUtilisateur = null)
         $rapport['erreurs'][] = 'Contrôle des contrats interrompu.';
     }
 
+    // 5. Sanctions : confirmées, non payées, date limite dépassée -> coupure du contrat concerné
+    try {
+        foreach (bd_rappel_sanctions_a_couper() as $sa) {
+            $idContrat = rappel_contrat_de_la_sanction($sa);
+            if ($idContrat === null) {
+                $rapport['sanctions_a_traiter'][] = $sa['reference_sanction'] . ' (' . $sa['client'] . ') : contrat à préciser';
+                continue;
+            }
+            $date = $sa['date_coupure_programmee'] >= date('Y-m-d') ? $sa['date_coupure_programmee'] : date('Y-m-d');
+            try {
+                coupure_programmer_contrat(
+                    $idContrat, 'SANCTION_FRAUDE_NON_PAYEE', $date, $idUtilisateur,
+                    'Sanction ' . $sa['reference_sanction'] . ' non payée après la date limite',
+                    (int) $sa['id_sanction'], (float) $sa['frais_retablissement']
+                );
+                $rapport['sanctions'][] = $sa['reference_sanction'] . ' (' . $sa['client'] . ')';
+            } catch (DomainException $e) {
+                $rapport['erreurs'][] = 'Sanction ' . $sa['reference_sanction'] . ' : ' . $e->getMessage();
+            }
+        }
+        foreach (bd_rappel_coupures_sanction_a_annuler() as $co) {
+            try {
+                coupure_faire_annuler((int) $co['id_coupure'], $idUtilisateur, 'Annulée automatiquement : la sanction ' . $co['reference_sanction'] . ' est payée.');
+                $rapport['sanctions_annulees'][] = $co['reference_sanction'];
+            } catch (DomainException $e) {
+            }
+        }
+    } catch (Throwable $e) {
+        $rapport['erreurs'][] = 'Contrôle des sanctions interrompu.';
+    }
+
     try {
         bd_journal_enregistrer(
             $idUtilisateur, 'EXECUTION_TACHES_PLANIFIEES', null, null,
             'Tâches planifiées : ' . $rapport['estimations'] . ' estimation(s), ' . count($rapport['penalites'])
                 . ' pénalité(s), ' . count($rapport['coupures']) . ' coupure(s) programmée(s), '
-                . count($rapport['non_declares']) . ' contrat(s) sans déclaration'
+                . count($rapport['non_declares']) . ' contrat(s) sans déclaration, '
+                . count($rapport['sanctions']) . ' coupure(s) de sanction'
         );
     } catch (Throwable $e) {
     }

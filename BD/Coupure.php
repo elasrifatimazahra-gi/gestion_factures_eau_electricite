@@ -254,3 +254,25 @@ function bd_coupure_definir_statut_service($idContrat, $statutService)
     }
     bd_coupure_ecrire("UPDATE contrats SET statut_service = ? WHERE id_contrat = ?", 'si', [$statutService, (int) $idContrat]);
 }
+
+/** Sanction liée : la coupure vient d'être exécutée. */
+function bd_coupure_sanction_coupee($idSanction)
+{
+    bd_coupure_ecrire(
+        "UPDATE sanctions SET statut = 'COUPURE_EFFECTUEE', date_coupure_reelle = NOW()
+         WHERE id_sanction = ? AND statut IN ('NOTIFIEE', 'CONTESTEE', 'CONFIRMEE')",
+        'i',
+        [(int) $idSanction]
+    );
+}
+
+/** Sanction liée : le service est rétabli, la sanction est régularisée. */
+function bd_coupure_sanction_retablie($idSanction)
+{
+    bd_coupure_ecrire(
+        "UPDATE sanctions SET statut = 'REGULARISEE', date_retablissement = NOW()
+         WHERE id_sanction = ? AND statut = 'COUPURE_EFFECTUEE'",
+        'i',
+        [(int) $idSanction]
+    );
+}

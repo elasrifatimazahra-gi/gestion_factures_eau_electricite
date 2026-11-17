@@ -63,12 +63,12 @@ function coupure_transaction(callable $travail)
  * Lève DomainException (message affichable) si la coupure est impossible.
  * Ne pas appeler à l'intérieur d'une autre transaction.
  */
-function coupure_programmer_contrat($idContrat, $motif, $datePrevue, $idUtilisateur = null, $commentaire = '', $idSanction = null)
+function coupure_programmer_contrat($idContrat, $motif, $datePrevue, $idUtilisateur = null, $commentaire = '', $idSanction = null, $frais = null)
 {
     if (!array_key_exists($motif, bd_coupure_motifs())) {
         throw new DomainException('Motif de coupure invalide.');
     }
-    return coupure_transaction(function () use ($idContrat, $motif, $datePrevue, $idUtilisateur, $commentaire, $idSanction) {
+    return coupure_transaction(function () use ($idContrat, $motif, $datePrevue, $idUtilisateur, $commentaire, $idSanction, $frais) {
         $info = bd_coupure_contrat_infos($idContrat, true);
         if (!$info) {
             throw new DomainException('Contrat introuvable.');
@@ -82,7 +82,7 @@ function coupure_programmer_contrat($idContrat, $motif, $datePrevue, $idUtilisat
         if (bd_coupure_ouverte_pour_contrat($idContrat)) {
             throw new DomainException('Une coupure est déjà programmée ou en cours pour ce contrat.');
         }
-        $frais = coupure_frais_retablissement();
+        $frais = ($frais !== null && (float) $frais > 0) ? round((float) $frais, 2) : coupure_frais_retablissement();
         $idCoupure = bd_coupure_programmer($info['id_client'], $idContrat, $motif, $datePrevue, $frais, $idUtilisateur, $commentaire, $idSanction);
         bd_coupure_definir_statut_service($idContrat, 'AVERTISSEMENT');
 
@@ -129,6 +129,9 @@ function coupure_faire_executer($idCoupure, $idUtilisateur)
             throw new DomainException('La coupure a déjà été traitée.');
         }
         bd_coupure_definir_statut_service($c['id_contrat'], 'COUPE');
+        if (!empty($c['id_sanction'])) {
+            bd_coupure_sanction_coupee($c['id_sanction']);
+        }
 
         bd_journal_enregistrer(
             $idUtilisateur, 'EXECUTION_COUPURE', 'coupures_services', (int) $idCoupure,
@@ -164,6 +167,9 @@ function coupure_faire_retablir($idCoupure, $idUtilisateur, $montantFrais)
             throw new DomainException('La coupure a déjà été traitée.');
         }
         bd_coupure_definir_statut_service($c['id_contrat'], 'ACTIF');
+        if (!empty($c['id_sanction'])) {
+            bd_coupure_sanction_retablie($c['id_sanction']);
+        }
 
         bd_journal_enregistrer(
             $idUtilisateur, 'RETABLISSEMENT', 'coupures_services', (int) $idCoupure,
@@ -249,8 +255,9 @@ function Coupure_index($param = null)
     unset($_SESSION['message_coupure']);
     $erreur = $_SESSION['erreur_coupure'] ?? null;
     unset($_SESSION['erreur_coupure']);
-    $rapport = $_SESSION['rapport_rappel'] ?? null;
+    $rapport = $_SESSION['rapport_rappel'] ?? null;   // rapport des tâches planifiées (voir Traitement/Rappel.php)
     unset($_SESSION['rapport_rappel']);
+
     include ROOT . 'IHM/fournisseur/coupures.php';
 }
 

@@ -38,3 +38,56 @@ function bd_rappel_notification_deja_envoyee($idUtilisateur, $titre, $depuis)
     );
     return (int) ($l[0]['n'] ?? 0) > 0;
 }
+
+/** Vrai si la table sanctions a une colonne id_contrat (selon la version de la base). */
+function bd_rappel_sanctions_ont_contrat()
+{
+    $r = mysqli_query(Connexion(), "SHOW COLUMNS FROM `sanctions` LIKE 'id_contrat'");
+    return $r && mysqli_num_rows($r) > 0;
+}
+
+/**
+ * Sanctions CONFIRMEES, non payées, dont la date limite de paiement est dépassée et qui n'ont pas
+ * encore de coupure (hors coupure annulée). « Non payée » = la facture exceptionnelle n'est pas PAYEE.
+ */
+function bd_rappel_sanctions_a_couper()
+{
+    $colonneContrat = bd_rappel_sanctions_ont_contrat() ? 's.id_contrat' : 'NULL';
+    return bd_coupure_selectionner(
+        "SELECT s.id_sanction, s.reference_sanction, s.id_client, s.date_coupure_programmee, s.frais_retablissement,
+                $colonneContrat AS id_contrat_sanction, ce.id_contrat AS id_contrat_controle,
+                CONCAT(cl.nom, ' ', cl.prenom) AS client
+         FROM sanctions s
+         JOIN clients cl ON cl.id_client = s.id_client
+         LEFT JOIN controle_annuel ce ON ce.id_controle = s.id_controle
+         LEFT JOIN factures fe ON fe.id_facture = s.id_facture_exceptionnelle
+         WHERE s.statut = 'CONFIRMEE'
+           AND s.date_limite_paiement < CURDATE()
+           AND (fe.id_facture IS NULL OR fe.statut <> 'PAYEE')
+           AND NOT EXISTS (SELECT 1 FROM coupures_services c WHERE c.id_sanction = s.id_sanction AND c.statut <> 'ANNULEE')
+         ORDER BY s.id_sanction"
+    );
+}
+
+/** Identifiants des contrats actifs d'un client. */
+function bd_rappel_contrats_actifs_du_client($idClient)
+{
+    return array_column(bd_coupure_selectionner(
+        "SELECT id_contrat FROM contrats WHERE id_client = ? AND statut = 'ACTIF' ORDER BY id_contrat",
+        'i',
+        [(int) $idClient]
+    ), 'id_contrat');
+}
+
+/** Coupures PROGRAMMEES d'une sanction devenue payée (facture PAYEE), régularisée ou annulée. */
+function bd_rappel_coupures_sanction_a_annuler()
+{
+    return bd_coupure_selectionner(
+        "SELECT c.id_coupure, s.reference_sanction
+         FROM coupures_services c
+         JOIN sanctions s ON s.id_sanction = c.id_sanction
+         LEFT JOIN factures fe ON fe.id_facture = s.id_facture_exceptionnelle
+         WHERE c.statut = 'PROGRAMMEE'
+           AND (s.statut IN ('REGULARISEE', 'ANNULEE') OR fe.statut = 'PAYEE')"
+    );
+}
