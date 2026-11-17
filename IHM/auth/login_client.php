@@ -8,11 +8,11 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/auth.css?v=<?= filemtime(ROOT . 'assets/css/auth.css') ?>">
 </head>
-<body class="auth-client">
+<body class="auth-carte">
 <main class="auth-page">
 
     <section class="auth-visuel">
-        <div aria-hidden="true"></div>
+        <div class="auth-marque-nom">Amanor</div>
 
         <div class="auth-accroche">
             <span class="auth-surtitre">Votre espace en ligne</span>
@@ -24,11 +24,9 @@
     </section>
 
     <section class="auth-formulaire">
-        <div class="langues"><span class="actif">FR</span><span>AR</span></div>
-
         <div class="auth-bloc">
             <span class="auth-etiquette">Espace client</span>
-            <h2>Bienvenue chez<br><span class="auth-bienvenue-marque">Amanor</span></h2>
+            <h2>Connexion client</h2>
             <p class="auth-sous-titre">Connectez-vous pour accéder à votre espace personnel.</p>
 
             <?php if ($erreur): ?>
@@ -54,15 +52,13 @@
             </form>
 
             <p class="auth-pied">Pas encore client ? <strong>Rendez-vous dans votre agence.</strong></p>
-            <div style="text-align:center">
+            <div class="auth-pied">
                 <a class="auth-lien" href="<?= BASE_URL ?>Auth/login_fournisseur">Connexion fournisseur</a>
-                <a class="auth-lien" href="<?= BASE_URL ?>Auth/login_agent">Connexion agent</a>
+                <a class="auth-lien" href="<?= BASE_URL ?>Auth/login_agent" style="margin-top:8px">Connexion agent</a>
             </div>
-            <div class="auth-copyright">© <?= date('Y') ?> Amanor · Aide et confidentialité</div>
         </div>
     </section>
 
 </main>
-<button type="button" class="aide" aria-label="Aide">?</button>
 </body>
 </html>

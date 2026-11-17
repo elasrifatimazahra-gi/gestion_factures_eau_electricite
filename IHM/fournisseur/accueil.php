@@ -102,10 +102,6 @@ $statuts = [
                 <p class="topbar__subtitle">Vue d'ensemble de l'activité de votre service.</p>
             </div>
             <div class="topbar__actions">
-                <div class="lang">
-                    <button type="button" class="lang__btn is-active">FR</button>
-                    <button type="button" class="lang__btn">AR</button>
-                </div>
                 <button type="button" class="icon-btn" aria-label="Notifications">
                     <?= $ico('cloche') ?><span class="icon-btn__dot"></span>
                 </button>

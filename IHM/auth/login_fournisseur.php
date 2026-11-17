@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/auth.css?v=<?= filemtime(ROOT . 'assets/css/auth.css') ?>">
 </head>
-<body class="auth-fournisseur">
+<body class="auth-carte">
 <main class="auth-page">
 
     <section class="auth-visuel">
@@ -26,8 +26,6 @@
     </section>
 
     <section class="auth-formulaire">
-        <div class="langues"><span class="actif">FR</span><span>AR</span></div>
-
         <div class="auth-bloc">
             <span class="auth-etiquette">Accès professionnel</span>
             <h2>Connexion fournisseur</h2>

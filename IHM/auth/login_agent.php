@@ -7,7 +7,7 @@
     <title>Connexion agent</title>
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/auth.css?v=<?= filemtime(ROOT . 'assets/css/auth.css') ?>">
 </head>
-<body class="auth-fournisseur">
+<body class="auth-carte">
 <main class="auth-page">
     <section class="auth-visuel">
         <div class="auth-marque-nom">Amanor</div>

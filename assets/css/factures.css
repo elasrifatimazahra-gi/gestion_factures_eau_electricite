@@ -71,9 +71,6 @@ svg.ico { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-wi
 .statut-portail { display: flex; align-items: center; gap: 8px; color: var(--gris); font-size: 13px; }
 .point-vert { width: 8px; height: 8px; border-radius: 50%; background: #2fa66b; }
 .topbar-droite { display: flex; align-items: center; gap: 12px; }
-.langues { display: flex; padding: 3px; border-radius: 10px; background: #eef2f0; }
-.langues span { padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; color: #7c8a84; }
-.langues span.actif { background: #fff; color: var(--vert-sombre); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
 .cloche {
     position: relative; width: 38px; height: 38px; border-radius: 10px;
     background: #fff; border: 1px solid var(--bord); color: #3b4a43;
