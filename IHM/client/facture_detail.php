@@ -96,7 +96,7 @@ $photos = [
                 <a class="retour" href="<?= BASE_URL ?>Facture/liste">&larr; Retour à mes factures</a>
                 <?php if ($afficherOutils): ?>
                 <div class="outils-droite">
-                   <button type="button" class="btn btn-plein" onclick="window.print()"><?= $ico('telecharger') ?> Télécharger PDF</button>
+                   <button type="button" class="btn btn-plein" onclick="window.location.href='<?= BASE_URL ?>FacturePdf/telecharger/<?= (int) $facture['id_facture'] ?>'"><?= $ico('telecharger') ?> Télécharger PDF</button>
                     <button type="button" class="btn btn-contour" onclick="window.print()"><?= $ico('imprimer') ?> Imprimer</button>
                 </div>
                 <?php endif; ?>
