@@ -27,6 +27,17 @@ $statuts = [
                     <option value="<?= (int) $client['id_client'] ?>"><?= htmlspecialchars($client['numero_client'] . ' — ' . trim($client['prenom'] . ' ' . $client['nom'])) ?></option>
                 <?php endforeach; ?>
             </select>
+         </label>
+        <label class="field" for="id_contrat">
+            <span class="field__label">Contrat</span>
+            <select class="field__input" id="id_contrat" name="id_contrat">
+                <option value="">Choisir un contrat</option>
+                <?php foreach ($contrats as $contrat): ?>
+                    <option value="<?= (int) $contrat['id_contrat'] ?>" data-client="<?= (int) $contrat['id_client'] ?>" style="display:none">
+                        <?= htmlspecialchars($contrat['numero_contrat']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
         </label>
         <label class="field" for="motif">
             <span class="field__label">Motif</span>
@@ -58,6 +69,20 @@ $statuts = [
             <button type="submit" class="btn btn--primary">Émettre et notifier</button>
         </div>
     </form>
+    <script>
+    document.getElementById('id_client').addEventListener('change', function () {
+        var idClient = this.value;
+        var select = document.getElementById('id_contrat');
+        var options = select.querySelectorAll('option[data-client]');
+        var visibles = 0, dernier = null;
+        options.forEach(function (opt) {
+            var visible = opt.dataset.client === idClient;
+            opt.style.display = visible ? '' : 'none';
+            if (visible) { visibles++; dernier = opt; }
+        });
+        select.value = (visibles === 1 && dernier) ? dernier.value : '';
+    });
+    </script>
 </section>
 <section class="dash-carte fournisseur-table-card">
     <div class="clients-table-scroll">

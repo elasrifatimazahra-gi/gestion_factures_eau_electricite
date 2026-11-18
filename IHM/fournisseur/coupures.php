@@ -114,7 +114,7 @@ $aujourdhui = date('Y-m-d');
 .rt-badge--ok { background: var(--rt-ok-bg); color: var(--rt-ok); }
 
 /* ---- Synthèse : une tuile par type de tâche ---- */
-.rt__tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.rt__tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; margin-bottom: 18px; }
 .rt-tile { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 10px; border-left: 4px solid transparent; background: var(--rt-soft); }
 .rt-tile__nb { font-size: 1.7rem; font-weight: 800; line-height: 1.1; }
 .rt-tile__label { font-size: .8rem; font-weight: 600; color: var(--rt-muted); }
@@ -165,6 +165,7 @@ $aujourdhui = date('Y-m-d');
 .rt-tile--ok   { background: var(--rt-ok-bg);   border-left-color: var(--rt-ok); }   .rt-tile--ok .rt-tile__nb   { color: var(--rt-ok); }
 .rt-bloc--ok   .rt-bloc__head { background: var(--rt-ok-bg); }   .rt-bloc--ok   .rt-bloc__nb { background: var(--rt-ok);   color: #fff; }
 .rt-bloc--ok   .rt-item__detail { background: var(--rt-ok-bg);   color: var(--rt-ok); }
+.rt__zeros { margin: 0 0 18px; padding: 9px 14px; border-radius: 10px; background: var(--rt-ok-bg); color: var(--rt-ok); font-size: .85rem; font-weight: 600; }
 
         </style>
 

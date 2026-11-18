@@ -1,6 +1,7 @@
 <?php
 
 require_once ROOT . 'BD/Sanction.php';
+require_once ROOT . 'BD/Contrat.php';
 require_once ROOT . 'BD/Journal.php';
 require_once ROOT . 'BD/Notification.php';
 require_once ROOT . 'Traitement/Auth.php';
@@ -10,6 +11,7 @@ function Sanction_index($param = null)
     exiger_role('FOURNISSEUR');
     $sanctions = bd_sanction_lister();
     $clients = bd_sanction_clients_lister();
+    $contrats = bd_contrat_lister();
     $erreur = $_SESSION['erreur_sanction'] ?? '';
     $message = $_SESSION['message_sanction'] ?? '';
     unset($_SESSION['erreur_sanction'], $_SESSION['message_sanction']);
@@ -25,6 +27,7 @@ function Sanction_creer($param = null)
     }
 
     $idClient = filter_var($_POST['id_client'] ?? null, FILTER_VALIDATE_INT);
+    $idContrat = filter_var($_POST['id_contrat'] ?? null, FILTER_VALIDATE_INT) ?: null;
     $motif = is_string($_POST['motif'] ?? null) ? $_POST['motif'] : '';
     $energie = filter_var($_POST['montant_energie_regularisee'] ?? null, FILTER_VALIDATE_FLOAT);
     $penalite = filter_var($_POST['penalite_fraude'] ?? null, FILTER_VALIDATE_FLOAT);
@@ -32,12 +35,14 @@ function Sanction_creer($param = null)
     $dateLimite = sanction_date_valide($_POST['date_limite_paiement'] ?? null);
     $dateCoupure = sanction_date_valide($_POST['date_coupure_programmee'] ?? null);
     $clients = array_map('intval', array_column(bd_sanction_clients_lister(), 'id_client'));
+    $contratsDuClient = $idClient ? array_map('intval', array_column(bd_contrat_lister((int) $idClient), 'id_contrat')) : [];
     if (!$idClient || !in_array((int) $idClient, $clients, true)
         || !in_array($motif, MOTIFS_SANCTION, true)
         || $energie === false || $energie < 0 || $penalite === false || $penalite < 0
         || $frais === false || $frais < 0 || !$dateLimite || !$dateCoupure
-        || $dateLimite < date('Y-m-d') || $dateCoupure <= $dateLimite) {
-        $_SESSION['erreur_sanction'] = 'Vérifiez le client, le motif, les montants et les dates.';
+        || $dateLimite < date('Y-m-d') || $dateCoupure <= $dateLimite
+        || ($idContrat !== null && !in_array($idContrat, $contratsDuClient, true))) {
+        $_SESSION['erreur_sanction'] = 'Vérifiez le client, le contrat, le motif, les montants et les dates.';
         rediriger('Sanction/index');
     }
 
@@ -48,6 +53,7 @@ function Sanction_creer($param = null)
     try {
         $sanctionCree = bd_sanction_creer([
             'id_client' => (int) $idClient,
+            'id_contrat' => $idContrat,
             'motif' => $motif,
             'montant_energie_regularisee' => (float) $energie,
             'penalite_fraude' => (float) $penalite,

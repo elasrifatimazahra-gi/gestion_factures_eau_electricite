@@ -72,18 +72,19 @@ function bd_sanction_creer(array $donnees)
         + (float) $donnees['frais_retablissement'],
         2
     );
-    $stmt = mysqli_prepare(
+     $stmt = mysqli_prepare(
         $link,
         "INSERT INTO sanctions (
-            reference_sanction, id_client, motif, montant_energie_regularisee,
+            reference_sanction, id_client, id_contrat, motif, montant_energie_regularisee,
             penalite_fraude, frais_retablissement, montant_total,
             date_limite_paiement, date_coupure_programmee
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
     if (!$stmt) {
         throw new RuntimeException("Impossible de préparer la création de la sanction : " . mysqli_error($link));
     }
     $idClient = (int) $donnees['id_client'];
+    $idContrat = $donnees['id_contrat'] !== null ? (int) $donnees['id_contrat'] : null;
     $energie = (float) $donnees['montant_energie_regularisee'];
     $penalite = (float) $donnees['penalite_fraude'];
     $frais = (float) $donnees['frais_retablissement'];
@@ -91,9 +92,10 @@ function bd_sanction_creer(array $donnees)
     $dateCoupure = $donnees['date_coupure_programmee'];
     mysqli_stmt_bind_param(
         $stmt,
-        'sisddddss',
+        'siisddddss',
         $reference,
         $idClient,
+        $idContrat,
         $donnees['motif'],
         $energie,
         $penalite,
